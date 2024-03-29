@@ -12,17 +12,19 @@ import (
 
 func TestCreateProject(t *testing.T) {
 
-	var client = db.CreateClient()
-	var conn = db.Connect(*client)
+	client := db.CreateClient()
+	conn := db.Connect(*client)
 	defer db.Disconnect(*client, conn)
 
-	CreateMockTestProject(t, conn, client)
+	user := RegisterMockTestUser(t, conn, client)
+	CreateMockTestProjectWithUser(t, conn, client, user)
+	DeleteTestUser(t, conn, client, user)
 }
 
 func TestCreateProjectWithoutOwner(t *testing.T) {
 
-	var client = db.CreateClient()
-	var conn = db.Connect(*client)
+	client := db.CreateClient()
+	conn := db.Connect(*client)
 	defer db.Disconnect(*client, conn)
 
 	project := models.Project{
@@ -35,8 +37,8 @@ func TestCreateProjectWithoutOwner(t *testing.T) {
 
 func TestCreateProjectWithoutName(t *testing.T) {
 
-	var client = db.CreateClient()
-	var conn = db.Connect(*client)
+	client := db.CreateClient()
+	conn := db.Connect(*client)
 	defer db.Disconnect(*client, conn)
 
 	project := &models.Project{
@@ -48,8 +50,8 @@ func TestCreateProjectWithoutName(t *testing.T) {
 }
 func TestCreateProjectWithoutDescription(t *testing.T) {
 
-	var client = db.CreateClient()
-	var conn = db.Connect(*client)
+	client := db.CreateClient()
+	conn := db.Connect(*client)
 	defer db.Disconnect(*client, conn)
 
 	project := &models.Project{
@@ -62,12 +64,44 @@ func TestCreateProjectWithoutDescription(t *testing.T) {
 
 func TestCreateProjectThatAlreadyExists(t *testing.T) {
 
-	var client = db.CreateClient()
-	var conn = db.Connect(*client)
+	client := db.CreateClient()
+	conn := db.Connect(*client)
 	defer db.Disconnect(*client, conn)
 
 	user := RegisterMockTestUser(t, conn, client)
 	project := CreateMockTestProjectWithUser(t, conn, client, user)
 
 	CreateTestProjectWithError(t, conn, client, project, utils.HTTP_STATUS_CONFLICT, error.PROJECT_ALREADY_EXISTS)
+	DeleteTestUser(t, conn, client, user)
+}
+
+func TestGetUserProjects(t *testing.T) {
+
+	client := db.CreateClient()
+	conn := db.Connect(*client)
+	defer db.Disconnect(*client, conn)
+
+	user := RegisterMockTestUser(t, conn, client)
+	project := CreateMockTestProjectWithUser(t, conn, client, user)
+	project2 := CreateMockTestProjectWithUser(t, conn, client, user)
+
+	projects := GetUserProjects(conn, client, user.Email)
+
+	if len(projects) == 0 {
+		t.Errorf("No projects found for user: %v", user.Email)
+	}
+
+	if len(projects) != 2 {
+		t.Errorf("Incorrect number of projects found for user: %v", user.Email)
+	}
+
+	if projects[0].Name != project.Name {
+		t.Errorf("Incorrect project found: %v", projects[0].Name)
+	}
+
+	if projects[1].Name != project2.Name {
+		t.Errorf("Incorrect project found: %v", projects[1].Name)
+	}
+
+	DeleteTestUser(t, conn, client, user)
 }

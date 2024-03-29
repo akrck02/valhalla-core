@@ -11,6 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Create project logic
+//
+// [param] conn | context.Context : The connection context
+// [param] client | *mongo.Client : The mongo client
+// [param] project | models.Project : The project to create
+//
+// [return] *models.Error : The error
 func CreateProject(conn context.Context, client *mongo.Client, project *models.Project) *models.Error {
 
 	if utils.IsEmpty(project.Name) {
@@ -38,9 +45,9 @@ func CreateProject(conn context.Context, client *mongo.Client, project *models.P
 	}
 
 	coll := client.Database(db.CurrentDatabase).Collection(db.PROJECT)
-	found := nameExists(project.Name, conn, coll)
+	found := nameExists(conn, coll, project.Name, project.Owner)
 
-	if found.Name != "" {
+	if found {
 		return &models.Error{
 			Status:  utils.HTTP_STATUS_CONFLICT,
 			Error:   int(error.PROJECT_ALREADY_EXISTS),
@@ -61,12 +68,26 @@ func CreateProject(conn context.Context, client *mongo.Client, project *models.P
 	return nil
 }
 
-func EditProject(conn context.Context, client *mongo.Client, project models.Project) *models.Error {
+// Edit project logic
+//
+// [param] conn | context.Context : The connection context
+// [param] client | *mongo.Client : The mongo client
+// [param] project | models.Project : The project to edit
+//
+// [return] *models.Error : The error
+func EditProject(conn context.Context, client *mongo.Client, project *models.Project) *models.Error {
 
 	return nil
 }
 
-func DeleteProject(conn context.Context, client *mongo.Client, project models.Project) *models.Error {
+// Delete project logic
+//
+// [param] conn | context.Context : The connection context
+// [param] client | *mongo.Client : The mongo client
+// [param] project | models.Project : The project to delete
+//
+// [return] *models.Error : The error
+func DeleteProject(conn context.Context, client *mongo.Client, project *models.Project) *models.Error {
 
 	if utils.IsEmpty(project.Name) {
 		return &models.Error{
@@ -113,6 +134,13 @@ func DeleteProject(conn context.Context, client *mongo.Client, project models.Pr
 }
 
 // Get project logic
+//
+// [param] conn | context.Context : The connection context
+// [param] client | *mongo.Client : The mongo client
+// [param] project | models.Project : The project to get
+// [param] found | *models.Project : The project found
+//
+// [return] *models.Error : The error
 func GetProject(conn context.Context, client *mongo.Client, project models.Project, found *models.Project) *models.Error { // get project from database
 
 	projects := client.Database(db.CurrentDatabase).Collection(db.PROJECT)
@@ -135,11 +163,44 @@ func GetProject(conn context.Context, client *mongo.Client, project models.Proje
 	return nil
 }
 
-func nameExists(name string, conn context.Context, coll *mongo.Collection) models.Project {
-	filter := bson.D{{Key: "name", Value: name}}
+// Get all projects by user logic
+//
+// [param] conn | context.Context : The connection context
+// [param] client | *mongo.Client : The mongo client
+// [param] email | string : The email of the user
+//
+// [return] []models.Project : The projects of the user
+func GetUserProjects(conn context.Context, client *mongo.Client, email string) []models.Project {
 
-	var result models.Project
-	coll.FindOne(conn, filter).Decode(&result)
+	projects := client.Database(db.CurrentDatabase).Collection(db.PROJECT)
+
+	filter := bson.M{"owner": email}
+
+	cursor, err := projects.Find(conn, filter)
+
+	if err != nil {
+		return nil
+	}
+
+	var result []models.Project
+	cursor.All(conn, &result)
 
 	return result
+}
+
+// Check if project name exists
+//
+// [param] conn | context.Context : The connection context
+// [param] coll | *mongo.Collection : The mongo collection
+// [param] name | string : The name of the project
+// [param] owner | string : The owner of the project
+//
+// [return] models.Project : The project found
+func nameExists(conn context.Context, coll *mongo.Collection, name string, owner string) bool {
+	filter := bson.M{"name": name, "owner": owner}
+
+	var result *models.Project
+	coll.FindOne(conn, filter).Decode(&result)
+
+	return result != nil
 }

@@ -443,9 +443,21 @@ func DeleteUser(conn context.Context, client *mongo.Client, user *models.User) *
 		}
 	}
 
+	// delete user projects
+	projects := client.Database(db.CurrentDatabase).Collection(db.PROJECT)
+	_, err := projects.DeleteMany(conn, bson.M{"owner": user.Email})
+
+	if err != nil {
+		return &models.Error{
+			Status:  utils.HTTP_STATUS_INTERNAL_SERVER_ERROR,
+			Error:   int(error.USER_NOT_DELETED),
+			Message: "User not deleted",
+		}
+	}
+
 	// delete user devices
 	devices := client.Database(db.CurrentDatabase).Collection(db.DEVICE)
-	_, err := devices.DeleteMany(conn, bson.M{"user": user.Email})
+	_, err = devices.DeleteMany(conn, bson.M{"user": user.Email})
 
 	if err != nil {
 		return &models.Error{

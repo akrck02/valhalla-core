@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/akrck02/valhalla-core/log"
+	"github.com/akrck02/valhalla-core/mock"
 	"github.com/akrck02/valhalla-core/models"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -16,46 +17,33 @@ import (
 // [param] client | *mongo.Client: Database client
 //
 // [return] models.Project: Created project
-func CreateMockTestProject(t *testing.T, conn context.Context, client *mongo.Client) *models.Project {
-	user := RegisterMockTestUser(t, conn, client)
+func CreateMockTestProjectWithUser(t *testing.T, conn context.Context, client *mongo.Client, user *models.User) *models.Project {
 
 	project := &models.Project{
-		Name:        "Test Project",
-		Description: "Test Description",
+		Name:        mock.ProjectName(),
+		Description: mock.ProjectDescription(),
 		Owner:       user.Email,
 	}
 
-	log.FormattedInfo("Creating project: %v", project.Name)
-	err := CreateProject(conn, client, project)
-
-	if err != nil {
-		t.Errorf("Error creating project: %v", err)
-	}
-
-	t.Log("Project created successfully")
-	return project
+	return CreateTestProjectWithUser(t, conn, client, project, user)
 }
 
-// CreateMockTestProject creates a project for testing purposes
+// CreateTestProject creates a project for testing purposes
 //
 // [param] t | *testing.T: Testing object
 // [param] conn | context.Context: Database connection
 // [param] client | *mongo.Client: Database client
+// [param] project | *models.Project: Project to create
 //
-// [return] models.Project: Created project
-func CreateMockTestProjectWithUser(t *testing.T, conn context.Context, client *mongo.Client, user *models.User) *models.Project {
+// [return] *models.Project: Created project
+func CreateTestProjectWithUser(t *testing.T, conn context.Context, client *mongo.Client, project *models.Project, user *models.User) *models.Project {
 
-	project := &models.Project{
-		Name:        "Test Project",
-		Description: "Test Description",
-		Owner:       user.Email,
-	}
-
-	log.FormattedInfo("Creating project: %v", project.Name)
+	log.FormattedInfo("Creating project: ${0}", project.Name)
 	err := CreateProject(conn, client, project)
 
 	if err != nil {
 		t.Errorf("Error creating project: %v", err)
+		return nil
 	}
 
 	t.Log("Project created successfully")
@@ -82,6 +70,25 @@ func CreateTestProjectWithError(t *testing.T, conn context.Context, client *mong
 		return
 	}
 
-	t.Log("Project creation failed as expected")
+	log.Info("Project creation failed as expected")
 	log.FormattedInfo("Error creating project: ${0}", err.Message)
+}
+
+// DeleteTestProject deletes a project for testing purposes
+//
+// [param] t | *testing.T: Testing object
+// [param] conn | context.Context: Database connection
+// [param] client | *mongo.Client: Database client
+// [param] project | *models.Project: Project to delete
+func DeleteTestProject(t *testing.T, conn context.Context, client *mongo.Client, project *models.Project) {
+
+	log.FormattedInfo("Deleting project: ${0}", project.Name)
+	err := DeleteProject(conn, client, project)
+
+	if err != nil {
+		t.Errorf("Error deleting project: %v", err)
+		return
+	}
+
+	t.Log("Project deleted successfully")
 }

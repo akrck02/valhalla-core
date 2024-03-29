@@ -1,7 +1,7 @@
 package mock
 
 func ProjectName() string {
-	return "Funny Project Name"
+	return randomString(10)
 }
 
 func ProjectNameShort() string {
@@ -13,5 +13,5 @@ func ProjectNameLong() string {
 }
 
 func ProjectDescription() string {
-	return "This is a description of the project"
+	return randomString(40)
 }
