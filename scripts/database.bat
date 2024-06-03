@@ -1,1 +1,0 @@
-cd ../docker/database && docker compose up

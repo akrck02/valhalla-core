@@ -3,6 +3,6 @@ services:
   web:
     image: dannyben/madness
     container_name: valhalla-core-dev-docs
-    volumes: ["../../docs:/docs"]
+    volumes: ["../docs:/docs"]
     ports: ["3000:3000"]
     command: server

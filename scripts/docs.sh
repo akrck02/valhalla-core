@@ -1,1 +1,0 @@
-cd ../docker/docs && docker compose up

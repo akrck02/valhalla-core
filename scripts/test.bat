@@ -1,1 +1,0 @@
-cd ../docker/start && docker compose up
