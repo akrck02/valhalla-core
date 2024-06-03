@@ -24,7 +24,7 @@ Every contribution to Valhalla is licensed under the same license.
 
 # Current maintainers
 - [akrck02](https://github.com/akrck02)
-- [Itros97]([https://github.com/AlejandroMacazaga](https://github.com/Itros97)
+- [Itros97](https://github.com/Itros97)
 
 ### Code of Conduct
 
