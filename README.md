@@ -22,13 +22,9 @@ Credit will be appreciated, we work hard on this project for the community.
 
 Every contribution to Valhalla is licensed under the same license.
 
-# Authors
-
-### The Valhalla team
+# Current maintainers
 - [akrck02](https://github.com/akrck02)
-- [AlejandroMacazaga](https://github.com/AlejandroMacazaga)
-- [AnderRod01](https://github.com/AnderRod01)
-
+- [Itros97]([https://github.com/AlejandroMacazaga](https://github.com/Itros97)
 
 ### Code of Conduct
 
