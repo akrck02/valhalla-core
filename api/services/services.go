@@ -1,12 +1,15 @@
 package services
 
 import (
+	"time"
+
 	"github.com/akrck02/valhalla-core/configuration"
 	"github.com/akrck02/valhalla-core/log"
 	"github.com/akrck02/valhalla-core/middleware"
 	"github.com/akrck02/valhalla-core/models"
 	"github.com/akrck02/valhalla-core/utils"
 	"github.com/gin-gonic/gin"
+	cors "github.com/itsjamie/gin-cors"
 )
 
 const API_PATH = "api"
@@ -18,6 +21,7 @@ var ENDPOINTS = []models.Endpoint{
 	// User endpoints
 	models.EndpointFrom("user/register", utils.HTTP_METHOD_PUT, RegisterHttp, false),
 	models.EndpointFrom("user/login", utils.HTTP_METHOD_POST, LoginHttp, false),
+	models.EndpointFrom("user/login/auth", utils.HTTP_METHOD_POST, LoginAuthHttp, true),
 	models.EndpointFrom("user/edit", utils.HTTP_METHOD_POST, EditUserHttp, true),
 	models.EndpointFrom("user/edit/email", utils.HTTP_METHOD_POST, EditUserEmailHttp, true),
 	models.EndpointFrom("user/edit/profilepicture", utils.HTTP_METHOD_POST, EditUserProfilePictureHttp, true),
@@ -39,6 +43,9 @@ var ENDPOINTS = []models.Endpoint{
 	models.EndpointFrom("rol/delete", utils.HTTP_METHOD_DELETE, DeleteRoleHttp, true),
 	models.EndpointFrom("rol/get", utils.HTTP_METHOD_GET, GetRoleHttp, true),
 
+	// Project endpoints
+	models.EndpointFrom("project/create", utils.HTTP_METHOD_PUT, CreateProjectHttp, true),
+
 	// System endpoints
 	models.EndpointFrom("", utils.HTTP_METHOD_GET, ValhallaCoreInfoHttp, false),
 }
@@ -57,8 +64,17 @@ func Start() {
 	log.ShowLogAppTitle()
 	router := gin.Default()
 	router.NoRoute(middleware.NotFound())
+
+	router.Use(cors.Middleware(cors.Config{
+		Origins:         "*",
+		Methods:         "GET, PUT, POST, DELETE, OPTIONS",
+		RequestHeaders:  "User-Agent, Accept, Accept-Language, Authorization, Accept-Encoding, Referer, Content-type, mode, Origin, Connection, Sec-Fetch-Dest, Sec-Fetch-Mode, Sec-Fetch-Site, Pragma, Cache-Control",
+		ExposedHeaders:  "",
+		MaxAge:          300 * time.Second,
+		Credentials:     false,
+		ValidateHeaders: false,
+	}))
 	router.Use(middleware.Request())
-	router.Use(middleware.CORS())
 	router.Use(middleware.Security(ENDPOINTS, API_COMPLETE))
 	router.Use(middleware.Panic())
 
