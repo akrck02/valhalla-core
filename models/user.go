@@ -1,4 +1,4 @@
-package model
+package models
 
 type User struct {
 	Email          string `json:"em"`

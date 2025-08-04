@@ -1,30 +1,27 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
+	"flag"
 
-	_ "github.com/glebarez/go-sqlite"
+	"github.com/akrck02/valhalla-core/api"
+	"github.com/akrck02/valhalla-core/cli"
+	"github.com/akrck02/valhalla-core/logger"
 )
 
 func main() {
-	// Connect to the SQLite database
-	db, err := sql.Open("sqlite", "./my.db")
-	if err != nil {
-		fmt.Println(err)
-		return
+
+	modeFlag := flag.String("mode", "cli", "valhalla-core -mode=api")
+	flag.Parse()
+
+	// If startmode is api, start valhalla api
+	mode := *modeFlag
+	logger.Log("Selected mode: ", mode)
+	switch mode {
+	case "cli":
+		cli.Start()
+	case "api":
+		api.Start()
+	default:
+		panic("Selected mode does not exist.")
 	}
-
-	defer db.Close()
-	fmt.Println("Connected to the SQLite database successfully.")
-
-	// Get the version of SQLite
-	var sqliteVersion string
-	err = db.QueryRow("select sqlite_version()").Scan(&sqliteVersion)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	fmt.Println(sqliteVersion)
 }

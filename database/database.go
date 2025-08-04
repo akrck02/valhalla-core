@@ -1,4 +1,4 @@
-package connection
+package database
 
 import (
 	"database/sql"
@@ -6,11 +6,11 @@ import (
 	_ "github.com/glebarez/go-sqlite"
 )
 
-func GetSqlite() (*sql.DB, error) {
+func Connect() (*sql.DB, error) {
 	db, err := sql.Open("sqlite", "./valhalla.db")
 	if err != nil {
 		return nil, err
 	}
 
-	return db
+	return db, nil
 }

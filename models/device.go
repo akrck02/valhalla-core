@@ -1,4 +1,4 @@
-package model
+package models
 
 type Device struct {
 	Address   string `json:"ad"`
