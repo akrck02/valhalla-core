@@ -5,22 +5,22 @@ import (
 	"github.com/akrck02/valhalla-core/models"
 )
 
-func CreateProject(project models.Project) (*string, error) {
+func CreateProject(project models.Project) (*string, errors.VError) {
 	return nil, errors.TODO()
 }
 
-func RemoveProject(id string) error {
+func RemoveProject(id string) errors.VError {
 	return errors.TODO()
 }
 
-func UpdateProject(id string, project models.Project) error {
+func UpdateProject(id string, project models.Project) errors.VError {
 	return errors.TODO()
 }
 
-func GetProject(id string) (*models.Project, error) {
+func GetProject(id string) (*models.Project, errors.VError) {
 	return nil, errors.TODO()
 }
 
-func GetAllProjectsByMember(userId string) ([]models.Project, error) {
+func GetAllProjectsByMember(userId string) ([]models.Project, errors.VError) {
 	return make([]models.Project, 0), errors.TODO()
 }
