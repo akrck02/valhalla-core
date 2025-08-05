@@ -6,8 +6,8 @@ import (
 	_ "github.com/glebarez/go-sqlite"
 )
 
-func Connect() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", "./valhalla.db")
+func Connect(filePath string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite", filePath)
 	if err != nil {
 		return nil, err
 	}

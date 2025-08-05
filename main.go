@@ -3,14 +3,14 @@ package main
 import (
 	"flag"
 
-	"github.com/akrck02/valhalla-core/api"
-	"github.com/akrck02/valhalla-core/cli"
-	"github.com/akrck02/valhalla-core/logger"
+	"github.com/akrck02/valhalla-core/modules/api"
+	"github.com/akrck02/valhalla-core/modules/cli"
+	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
 func main() {
 
-	modeFlag := flag.String("mode", "cli", "valhalla-core -mode=api")
+	modeFlag := flag.String("mode", "api", "valhalla-core -mode=api")
 	flag.Parse()
 
 	// If startmode is api, start valhalla api

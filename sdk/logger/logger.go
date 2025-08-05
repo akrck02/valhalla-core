@@ -8,6 +8,10 @@ func Log(msgs ...any) {
 	log.Println(msgs...)
 }
 
+func Success(msgs ...any) {
+	Log(append([]any{" ✅ |"}, msgs...)...)
+}
+
 func Error(msgs ...any) {
 	Log(append([]any{" ❌ | Error:"}, msgs...)...)
 }

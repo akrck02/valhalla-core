@@ -6,13 +6,13 @@ import (
 	"github.com/akrck02/valhalla-core/database"
 	"github.com/akrck02/valhalla-core/database/tables"
 
-	"github.com/akrck02/valhalla-core/logger"
+	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
 func Start() {
 
 	// Connect to database
-	db, err := database.Connect()
+	db, err := database.Connect("./valhalla.db")
 	if nil != err {
 		logger.Errorf(err)
 		return
@@ -22,7 +22,7 @@ func Start() {
 	fmt.Println("Connected to the SQLite database successfully.")
 
 	// Create tables
-	err = tables.CreateTables(db)
+	err = tables.CreateTables(".", db)
 	if nil != err {
 		logger.Errorf(err)
 		return
