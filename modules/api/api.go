@@ -127,7 +127,7 @@ func setEndpointDefaults(endpoint *models.Endpoint) {
 
 }
 
-func applyMiddleware(context *models.ApiContext) *errors.VError {
+func applyMiddleware(context *models.ApiContext) *errors.ApiError {
 
 	for _, middleware := range ApiMiddlewares {
 		err := middleware(context)

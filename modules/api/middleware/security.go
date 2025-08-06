@@ -10,11 +10,10 @@ import (
 
 const AUTHORITATION_HEADER = "Authorization"
 
-func Security(context *models.ApiContext) *errors.VError {
+func Security(context *models.ApiContext) *errors.ApiError {
 
 	// Check if endpoint is registered and secured
 	if !context.Trazability.Endpoint.Secured {
-		//log.Printf("Endpoint %s is not secured", context.Trazability.Endpoint.Path)
 		return nil
 	}
 
@@ -22,19 +21,23 @@ func Security(context *models.ApiContext) *errors.VError {
 
 	// Check if token is empty
 	if context.Request.Authorization == "" {
-		return &errors.VError{
-			Status:  http.StatusForbidden,
-			Code:    errors.InvalidToken,
-			Message: "Missing token",
+		return &errors.ApiError{
+			Status: http.StatusForbidden,
+			Error: errors.VError{
+				Code:    errors.InvalidToken,
+				Message: "Missing token",
+			},
 		}
 	}
 
 	// Check if token is valid
 	if !tokenIsValid(context.Request.Authorization) {
-		return &errors.VError{
-			Status:  http.StatusForbidden,
-			Code:    errors.InvalidToken,
-			Message: "Invalid token",
+		return &errors.ApiError{
+			Status: http.StatusForbidden,
+			Error: errors.VError{
+				Code:    errors.InvalidToken,
+				Message: "Invalid token",
+			},
 		}
 	}
 

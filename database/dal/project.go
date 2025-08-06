@@ -6,21 +6,21 @@ import (
 )
 
 func CreateProject(project models.Project) (*string, *errors.VError) {
-	return nil, errors.TODO()
+	return nil, nil
 }
 
 func RemoveProject(id string) *errors.VError {
-	return errors.TODO()
+	return nil
 }
 
 func UpdateProject(id string, project models.Project) *errors.VError {
-	return errors.TODO()
+	return nil
 }
 
 func GetProject(id string) (*models.Project, *errors.VError) {
-	return nil, errors.TODO()
+	return nil, nil
 }
 
 func GetAllProjectsByMember(userId string) ([]models.Project, *errors.VError) {
-	return make([]models.Project, 0), errors.TODO()
+	return make([]models.Project, 0), nil
 }

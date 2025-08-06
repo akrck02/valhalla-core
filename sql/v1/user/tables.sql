@@ -3,14 +3,12 @@ CREATE TABLE database_metadata(
 	version INTEGER NOT NULL
 );
 
-
 CREATE TABLE project(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name TEXT NOT NULL,
 	description TEXT,
 	insert_date INTEGER NOT NULL,
-	update_date INTEGER NOT NULL,
-	PRIMARY KEY (id)
+	update_date INTEGER NOT NULL
 );
 
 CREATE TABLE task(
@@ -20,6 +18,5 @@ CREATE TABLE task(
 	description TEXT,
 	insert_date INTEGER NOT NULL,
 	update_date INTEGER NOT NULL,
-	PRIMARY KEY (id),
  	FOREIGN KEY (project_id) REFERENCES project(id)
 );

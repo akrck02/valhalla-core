@@ -18,5 +18,5 @@ type Endpoint struct {
 	Database bool `json:"-"`
 }
 
-type EndpointCheck func(context *ApiContext) *errors.VError
-type EndpointListener func(context *ApiContext) (*Response, *errors.VError)
+type EndpointCheck func(context *ApiContext) *errors.ApiError
+type EndpointListener func(context *ApiContext) (*Response, *errors.ApiError)

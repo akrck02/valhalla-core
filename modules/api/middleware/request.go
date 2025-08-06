@@ -11,15 +11,17 @@ import (
 const USER_AGENT_HEADER = "User-Agent"
 
 // Request handler middleware function
-func Request(r *http.Request, context *models.ApiContext) *errors.VError {
+func Request(r *http.Request, context *models.ApiContext) *errors.ApiError {
 
 	parserError := r.ParseForm()
 
 	if parserError != nil {
-		return &errors.VError{
-			Status:  http.StatusBadRequest,
-			Code:    errors.InvalidRequest,
-			Message: parserError.Error(),
+		return &errors.ApiError{
+			Status: http.StatusBadRequest,
+			Error: errors.VError{
+				Code:    errors.InvalidRequest,
+				Message: parserError.Error(),
+			},
 		}
 	}
 

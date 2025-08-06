@@ -1,16 +1,33 @@
 package errors
 
 type VError struct {
-	Status  int        `json:"status,omitempty"`
 	Code    VErrorCode `json:"code,omitempty"`
 	Message string     `json:"message,omitempty"`
 }
 
-func TODO() *VError {
-	return &VError{
-		Status:  500,
-		Code:    000,
+type ApiError struct {
+	Status int `json:"status,omitempty"`
+	Error  VError
+}
+
+func TODO() VError {
+	return VError{
+		Code:    NotImplemented,
 		Message: "Not yet implemented",
+	}
+}
+
+func Unexpected(message string) *VError {
+	return &VError{
+		Code:    UnexpectedError,
+		Message: message,
+	}
+}
+
+func New(code VErrorCode, message string) *VError {
+	return &VError{
+		Code:    code,
+		Message: message,
 	}
 }
 
