@@ -7,14 +7,28 @@ import (
 	"strings"
 )
 
-func CreateTables(basePath string, db *sql.DB) error {
+type AvailableDatabase string
 
-	currentDatabaseVersion := 1
+const (
+	MainDatabase AvailableDatabase = "main"
+	UserDatabase AvailableDatabase = "user"
+)
+
+func UpdateDatabaseTablesToLatestVersion(basePath string, database AvailableDatabase, db *sql.DB) error {
+
+	latestDbVersion := 1
+
+	switch database {
+	case MainDatabase:
+		latestDbVersion = 1
+	case UserDatabase:
+		latestDbVersion = 1
+	}
 
 	// if no database exists, create one
 	err := db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='database_metadata'").Scan()
 	if err == sql.ErrNoRows {
-		return createTablesForVersion(basePath, db, 0, currentDatabaseVersion)
+		return updateTablesForVersion(basePath, db, database, 0, latestDbVersion)
 	}
 
 	// get current version and update existing database
@@ -24,18 +38,18 @@ func CreateTables(basePath string, db *sql.DB) error {
 		return err
 	}
 
-	return createTablesForVersion(basePath, db, databaseVersion, currentDatabaseVersion)
+	return updateTablesForVersion(basePath, db, database, databaseVersion, latestDbVersion)
 }
 
-func createTablesForVersion(basePath string, db *sql.DB, currentVersion int, targetVersion int) error {
+func updateTablesForVersion(basePath string, db *sql.DB, database AvailableDatabase, currentVersion int, targetVersion int) error {
 
 	for version := currentVersion + 1; version <= targetVersion; version++ {
-		err := executeScriptIfExists(db, fmt.Sprintf("%s/sql/v%d/tables.sql", basePath, version))
+		err := executeScriptIfExists(db, fmt.Sprintf("%s/sql/v%d/%s/tables.sql", basePath, version, database))
 		if nil != err {
 			return err
 		}
 
-		err = executeScriptIfExists(db, fmt.Sprintf("%s/sql/v%d/data.sql", basePath, version))
+		err = executeScriptIfExists(db, fmt.Sprintf("%s/sql/v%d/%s/data.sql", basePath, version, database))
 		if nil != err {
 			return err
 		}

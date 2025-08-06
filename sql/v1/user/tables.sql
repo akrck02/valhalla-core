@@ -1,0 +1,25 @@
+CREATE TABLE database_metadata(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	version INTEGER NOT NULL
+);
+
+
+CREATE TABLE project(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT NOT NULL,
+	description TEXT,
+	insert_date INTEGER NOT NULL,
+	update_date INTEGER NOT NULL,
+	PRIMARY KEY (id)
+);
+
+CREATE TABLE task(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	project_id INTEGER NOT NULL,
+	name TEXT NOT NULL,
+	description TEXT,
+	insert_date INTEGER NOT NULL,
+	update_date INTEGER NOT NULL,
+	PRIMARY KEY (id),
+ 	FOREIGN KEY (project_id) REFERENCES project(id)
+);

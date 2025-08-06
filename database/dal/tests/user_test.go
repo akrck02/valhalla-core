@@ -1,4 +1,4 @@
-package dal_test
+package tests
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestRegister(t *testing.T) {
 	db, _ := database.Connect(filePath)
 	defer db.Close()
 
-	erri := tables.CreateTables(basePath, db)
+	erri := tables.UpdateDatabaseTablesToLatestVersion(basePath, db)
 	if erri != nil {
 		t.Fail()
 		logger.Error(erri.Error())

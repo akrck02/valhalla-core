@@ -22,7 +22,7 @@ func Start() {
 	fmt.Println("Connected to the SQLite database successfully.")
 
 	// Create tables
-	err = tables.CreateTables(".", db)
+	err = tables.UpdateDatabaseTablesToLatestVersion(".", tables.MainDatabase, db)
 	if nil != err {
 		logger.Errorf(err)
 		return
