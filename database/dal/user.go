@@ -9,6 +9,7 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -86,36 +87,34 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	}
 	defer rows.Close()
 
-	if rows.Next() {
-
-		var id int64
-		var email string
-		var profilePicture string
-		var password string
-		var database string
-		var insertDate int64
-
-		rows.Scan(
-			&id,
-			&email,
-			&profilePicture,
-			&password,
-			&database,
-			&insertDate,
-		)
-
-		return &models.User{
-			Id:             id,
-			Email:          email,
-			ProfilePicture: profilePicture,
-			Password:       password,
-			Database:       database,
-			InsertDate:     insertDate,
-		}, nil
-
+	if !rows.Next() {
+		return nil, errors.New(errors.NotFound, "User not found.")
 	}
 
-	return nil, errors.New(errors.NotFound, "User not found.")
+	var obtainedId int64
+	var email string
+	var profilePicture string
+	var password string
+	var database string
+	var insertDate int64
+
+	rows.Scan(
+		&obtainedId,
+		&email,
+		&profilePicture,
+		&password,
+		&database,
+		&insertDate,
+	)
+
+	return &models.User{
+		Id:             obtainedId,
+		Email:          email,
+		ProfilePicture: profilePicture,
+		Password:       password,
+		Database:       database,
+		InsertDate:     insertDate,
+	}, nil
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
@@ -149,36 +148,34 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 	}
 	defer rows.Close()
 
-	if rows.Next() {
-
-		var id int64
-		var email string
-		var profilePicture string
-		var password string
-		var database string
-		var insertDate int64
-
-		rows.Scan(
-			&id,
-			&email,
-			&profilePicture,
-			&password,
-			&database,
-			&insertDate,
-		)
-
-		return &models.User{
-			Id:             id,
-			Email:          email,
-			ProfilePicture: profilePicture,
-			Password:       password,
-			Database:       database,
-			InsertDate:     insertDate,
-		}, nil
-
+	if !rows.Next() {
+		return nil, errors.New(errors.NotFound, "User not found.")
 	}
 
-	return nil, errors.New(errors.NotFound, "User not found.")
+	var id int64
+	var obtainedEmail string
+	var profilePicture string
+	var password string
+	var database string
+	var insertDate int64
+
+	rows.Scan(
+		&id,
+		&obtainedEmail,
+		&profilePicture,
+		&password,
+		&database,
+		&insertDate,
+	)
+
+	return &models.User{
+		Id:             id,
+		Email:          obtainedEmail,
+		ProfilePicture: profilePicture,
+		Password:       password,
+		Database:       database,
+		InsertDate:     insertDate,
+	}, nil
 }
 
 func DeleteUser(db *sql.DB, id int64) *errors.VError {
@@ -283,13 +280,13 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 	return nil
 }
 
-func Login(db *sql.DB, email string, device *models.Device) (*string, *errors.VError) {
+func Login(db *sql.DB, secret string, email string, password string, device *models.Device) (*string, *errors.VError) {
 
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
 
-	if "" == email {
+	if "" == strings.TrimSpace(email) {
 		return nil, errors.New(errors.InvalidEmail, "Email cannot be empty.")
 	}
 
@@ -297,15 +294,54 @@ func Login(db *sql.DB, email string, device *models.Device) (*string, *errors.VE
 		return nil, errors.New(errors.InvalidRequest, "Device cannot be empty.")
 	}
 
-	if "" == device.Address {
+	if "" == strings.TrimSpace(device.Address) {
 		return nil, errors.New(errors.InvalidRequest, "Device address cannot be empty.")
 	}
 
-	if "" == device.UserAgent {
+	if "" == strings.TrimSpace(device.UserAgent) {
 		return nil, errors.New(errors.InvalidRequest, "Device user agent cannot be empty.")
 	}
 
-	return nil, nil
+	if "" == strings.TrimSpace(device.Token) {
+		return nil, errors.New(errors.InvalidRequest, "Device token cannot be empty.")
+	}
+
+	statement, err := db.Prepare("SELECT id, password FROM user WHERE email = ?")
+	if nil != err {
+		return nil, errors.New(errors.DatabaseError, err.Error())
+	}
+
+	rows, err := statement.Query(email)
+	if nil != err {
+		return nil, errors.New(errors.DatabaseError, err.Error())
+	}
+
+	if false == rows.Next() {
+		return nil, errors.New(errors.AccessDenied, "Access denied.")
+	}
+
+	var userId int64
+	var hash string
+	rows.Scan(&userId, &hash)
+	rows.Close()
+
+	err = cryptography.CompareHash(hash, password)
+	if nil != err {
+		return nil, errors.New(errors.AccessDenied, "Access denied.")
+	}
+
+	token, err := createUserToken(email, device, secret)
+	if nil != err {
+		return nil, errors.New(errors.CannotGenerateAuthToken, err.Error())
+	}
+
+	device.Token = token
+	error := CreateDevice(db, userId, device)
+	if nil != error {
+		return nil, error
+	}
+
+	return &token, nil
 }
 
 func LoginWithAuth(db *sql.DB, id int64, token string) (*string, *errors.VError) {
@@ -324,4 +360,21 @@ func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
 	}
 
 	return nil
+}
+
+func createUserToken(email string, device *models.Device, secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"email":      email,
+			"address":    device.Address,
+			"user_agent": device.UserAgent,
+			"exp":        time.Now().Add(time.Hour * 24).Unix(),
+		})
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

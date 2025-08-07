@@ -4,6 +4,7 @@ go 1.24.5
 
 require (
 	github.com/glebarez/go-sqlite v1.22.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.5.0
 	github.com/joho/godotenv v1.5.1
 	golang.org/x/crypto v0.40.0

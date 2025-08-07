@@ -173,10 +173,39 @@ func TestUserLogin(t *testing.T) {
 
 func loginValidation(t *testing.T, db *sql.DB) {
 
+	_, err := dal.Login(nil, "", "", "", nil)
+	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+
+	_, err = dal.Login(db, "", "", "", nil)
+	AssertVError(t, err, errors.InvalidEmail, "Email cannot be empty.")
+
+	_, err = dal.Login(db, "", "user@valhalla.org", "", nil)
+	AssertVError(t, err, errors.InvalidRequest, "Device cannot be empty.")
+
+	_, err = dal.Login(db, "", "user@valhalla.org", "", &models.Device{})
+	AssertVError(t, err, errors.InvalidRequest, "Device address cannot be empty.")
+
+	_, err = dal.Login(db, "", "user@valhalla.org", "", &models.Device{Address: "127.0.0.1"})
+	AssertVError(t, err, errors.InvalidRequest, "Device user agent cannot be empty.")
+
+	_, err = dal.Login(db, "", "user@valhalla.org", "", &models.Device{Address: "127.0.0.1", UserAgent: "Firefox"})
+	AssertVError(t, err, errors.InvalidRequest, "Device token cannot be empty.")
+
 }
 
 func login(t *testing.T, db *sql.DB) {
-
+	_, err := dal.Login(
+		db,
+		"supersecret",
+		"user@valhalla.org",
+		"$P4ssw0rdW3db1128",
+		&models.Device{
+			Address:   "127.0.0.1",
+			UserAgent: "Firefox",
+			Token:     "eyJhbGciOiJIUzI1NiJ9.eyJhZGRyZXNzIjoiMTI3LjAuMC4xIiwiZXhwIjoiMjAyNS0wOC0wNyAyMTowMToyOS43MDQzMjk1NzggKzAyMDAgQ0VTVCBtPSswLjA4MTA1ODc5MCIsImVtYWlsIjoidXNlckB2YWxoYWxsYS5vcmciLCJ1c2VyX2FnZW50IjoiRmlyZWZveCJ9.yTDtXIpiEklAw9z1YaHdO9oKFsdCdQysPUHy7Tb7MTM",
+		},
+	)
+	AssertVErrorDoesNotExist(t, err)
 }
 
 func loginWithAuthValidation(t *testing.T, db *sql.DB) {

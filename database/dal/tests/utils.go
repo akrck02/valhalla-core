@@ -33,7 +33,7 @@ func AssertVError(t *testing.T, error *errors.VError, code errors.VErrorCode, me
 		logger.Error("Test failed because error is empty.")
 		t.FailNow()
 	}
-	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("Error \n[%d - %s] \nwas expected but \n[%d - %s] \nwas found", code, message, error.Code, error.Message))
+	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("\n[%d - %s] \nwas expected but \n[%d - %s] \nwas found\n", code, message, error.Code, error.Message))
 }
 
 func NewTestDatabase(uuid string) (*sql.DB, *errors.VError) {
