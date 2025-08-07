@@ -3,6 +3,7 @@ package tests
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/akrck02/valhalla-core/database"
@@ -11,8 +12,7 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
-const TestDatabasePath string = "../../../"
-const TestDatabaseName string = "valhalla-test.db"
+const TestDatabasePath string = "../../.."
 
 func Assert(t *testing.T, predicate bool, failMessage string) {
 	if !predicate {
@@ -33,12 +33,19 @@ func AssertVError(t *testing.T, error *errors.VError, code errors.VErrorCode, me
 		logger.Error("Test failed because error is empty.")
 		t.FailNow()
 	}
-	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("Error \n[%d - %s] \nwas expected but \n[%d - %s] \nwas found", error.Code, error.Message, code, message))
+	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("Error \n[%d - %s] \nwas expected but \n[%d - %s] \nwas found", code, message, error.Code, error.Message))
 }
 
-func NewTestDatabase() (*sql.DB, *errors.VError) {
+func NewTestDatabase(uuid string) (*sql.DB, *errors.VError) {
 
-	db, err := database.Connect(fmt.Sprintf("%s%s", TestDatabasePath, TestDatabaseName))
+	path := fmt.Sprintf("%s/%s", TestDatabasePath, "temp")
+	err := os.MkdirAll(path, 0775)
+	if err != nil {
+		return nil, errors.New(errors.DatabaseError, err.Error())
+	}
+
+	name := fmt.Sprintf("%s/%s.db", path, uuid)
+	db, err := database.Connect(name)
 	if err != nil {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
@@ -49,4 +56,9 @@ func NewTestDatabase() (*sql.DB, *errors.VError) {
 	}
 
 	return db, nil
+}
+
+func RemoveDatabase(uuid string) {
+	path := fmt.Sprintf("%s/%s", TestDatabasePath, "temp")
+	os.Remove(fmt.Sprintf("%s/%s.db", path, uuid))
 }

@@ -55,7 +55,7 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
 
-	if 0 > id {
+	if 0 >= id {
 		return nil, errors.New(errors.InvalidId, "User id must be positive.")
 	}
 
@@ -81,19 +81,35 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	defer rows.Close()
 
 	if rows.Next() {
-		user := &models.User{}
+
+		var id int64
+		var email string
+		var profilePicture string
+		var password string
+		var database string
+		var insertDate int64
+
 		rows.Scan(
-			user.Id,
-			user.Email,
-			user.ProfilePicture,
-			user.Password,
-			user.Database,
-			user.InsertDate,
+			&id,
+			&email,
+			&profilePicture,
+			&password,
+			&database,
+			&insertDate,
 		)
-		return user, nil
+
+		return &models.User{
+			Id:             id,
+			Email:          email,
+			ProfilePicture: profilePicture,
+			Password:       password,
+			Database:       database,
+			InsertDate:     insertDate,
+		}, nil
+
 	}
 
-	return nil, errors.New(errors.NotFound, "User not found")
+	return nil, errors.New(errors.NotFound, "User not found.")
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
@@ -128,43 +144,134 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 	defer rows.Close()
 
 	if rows.Next() {
-		user := &models.User{}
+
+		var id int64
+		var email string
+		var profilePicture string
+		var password string
+		var database string
+		var insertDate int64
+
 		rows.Scan(
-			user.Id,
-			user.Email,
-			user.ProfilePicture,
-			user.Password,
-			user.Database,
-			user.InsertDate,
+			&id,
+			&email,
+			&profilePicture,
+			&password,
+			&database,
+			&insertDate,
 		)
-		return user, nil
+
+		return &models.User{
+			Id:             id,
+			Email:          email,
+			ProfilePicture: profilePicture,
+			Password:       password,
+			Database:       database,
+			InsertDate:     insertDate,
+		}, nil
+
 	}
 
-	return nil, errors.New(errors.NotFound, "User not found")
+	return nil, errors.New(errors.NotFound, "User not found.")
 }
 
-func DeleteUser(db *sql.DB, id string) *errors.VError {
+func DeleteUser(db *sql.DB, id int64) *errors.VError {
 
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if 0 >= id {
+		return errors.New(errors.InvalidId, "User id must be positive.")
+	}
+
+	statement, err := db.Prepare("DELETE FROM user WHERE id=?")
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	res, err := statement.Exec(id)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	if 0 == affectedRows {
+		return errors.New(errors.DatabaseError, "Cannot delete user.")
 	}
 
 	return nil
 }
 
-func UpdateUser(db *sql.DB, id string, user string) *errors.VError {
+func UpdateUserEmail(db *sql.DB, id int64, email string) *errors.VError {
 
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
 	}
 
+	if 0 >= id {
+		return errors.New(errors.InvalidId, "User id must be positive.")
+	}
+
+	err := validations.ValidateEmail(email)
+	if nil != err {
+		return errors.New(errors.InvalidEmail, err.Error())
+	}
+
+	statement, err := db.Prepare("UPDATE user SET email = ? WHERE id = ?")
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	res, err := statement.Exec(email, id)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	if 0 == affectedRows {
+		return errors.New(errors.DatabaseError, "Cannot update user.")
+	}
+
 	return nil
 }
 
-func UpdateUserProfilePicture(db *sql.DB, id string, picture []byte) *errors.VError {
+func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.VError {
 
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if 0 >= id {
+		return errors.New(errors.InvalidId, "User id must be positive.")
+	}
+
+	statement, err := db.Prepare("UPDATE user SET profile_pic = ? WHERE id = ?")
+
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	res, err := statement.Exec(profilePic, id)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	affectedRows, err := res.RowsAffected()
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	if 0 == affectedRows {
+		return errors.New(errors.DatabaseError, "Cannot update user.")
 	}
 
 	return nil
@@ -178,7 +285,7 @@ func Login(db *sql.DB, email string, device string) (*string, *errors.VError) {
 	return nil, nil
 }
 
-func LoginWithAuth(db *sql.DB, id string, token string) (*string, *errors.VError) {
+func LoginWithAuth(db *sql.DB, id int64, token string) (*string, *errors.VError) {
 
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
