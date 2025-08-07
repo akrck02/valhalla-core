@@ -32,8 +32,7 @@ func TestRegister(t *testing.T) {
 
 		_, err = dal.RegisterUser(db, &models.User{Email: "u@.org"})
 		AssertVError(t, err, errors.InvalidEmail, "mail: missing '@' or angle-addr")
-		ot be empty.]
-was found
+
 		_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org"})
 		AssertVError(t, err, errors.InvalidPassword, "Password cannot be empty.")
 
