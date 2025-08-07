@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func UserCrudTest(t *testing.T) {
+func TestUserCrud(t *testing.T) {
 
 	databaseUuid := uuid.NewString()
 	db, err := NewTestDatabase(databaseUuid)
@@ -118,7 +118,7 @@ func updateUserEmail(t *testing.T, db *sql.DB, user *models.User) *models.User {
 	obtainedUser, err := dal.GetUser(db, userId)
 	AssertVErrorDoesNotExist(t, err)
 
-	Assert(t, user.Email == newMail, "User mail mismatch.")
+	Assert(t, obtainedUser.Email == newMail, "User mail mismatch.")
 	return obtainedUser
 }
 
@@ -140,11 +140,11 @@ func updateUserProfilePicture(t *testing.T, db *sql.DB, user *models.User) *mode
 	obtainedUser, err := dal.GetUser(db, userId)
 	AssertVErrorDoesNotExist(t, err)
 
-	Assert(t, user.ProfilePicture == newProfilePic, "User mail mismatch.")
+	Assert(t, obtainedUser.ProfilePicture == newProfilePic, "User mail mismatch.")
 	return obtainedUser
 }
 
-func UserLoginTest(t *testing.T) {
+func TestUserLogin(t *testing.T) {
 
 	databaseUuid := uuid.NewString()
 	db, err := NewTestDatabase(databaseUuid)

@@ -9,6 +9,7 @@ CREATE TABLE user(
 	profile_pic TEXT,
 	password TEXT NOT NULL,
 	database TEXT NOT NULL,
+	validation_code TEXT NOT NULL,
 	insert_date INTEGER NOT NULL
 );
 

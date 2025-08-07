@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/akrck02/valhalla-core/sdk/cryptography"
 	"github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
@@ -31,12 +32,17 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 		return nil, errors.New(errors.InvalidPassword, err.Error())
 	}
 
-	statement, err := db.Prepare("INSERT INTO user(email, profile_pic, password, database, insert_date) VALUES(?,?,?,?,?)")
+	hashedPassword, err := cryptography.Hash(user.Password)
+	if nil != err {
+		return nil, errors.Unexpected(err.Error())
+	}
+
+	statement, err := db.Prepare("INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)")
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
 
-	res, err := statement.Exec(user.Email, user.ProfilePicture, user.Password, uuid.NewString(), time.Now())
+	res, err := statement.Exec(user.Email, user.ProfilePicture, hashedPassword, uuid.NewString(), uuid.NewString(), time.Now())
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
@@ -277,9 +283,26 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 	return nil
 }
 
-func Login(db *sql.DB, email string, device string) (*string, *errors.VError) {
+func Login(db *sql.DB, email string, device *models.Device) (*string, *errors.VError) {
+
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if "" == email {
+		return nil, errors.New(errors.InvalidEmail, "Email cannot be empty.")
+	}
+
+	if nil == device {
+		return nil, errors.New(errors.InvalidRequest, "Device cannot be empty.")
+	}
+
+	if "" == device.Address {
+		return nil, errors.New(errors.InvalidRequest, "Device address cannot be empty.")
+	}
+
+	if "" == device.UserAgent {
+		return nil, errors.New(errors.InvalidRequest, "Device user agent cannot be empty.")
 	}
 
 	return nil, nil
