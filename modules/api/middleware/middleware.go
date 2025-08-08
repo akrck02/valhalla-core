@@ -5,4 +5,4 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-type Middleware func(context *models.ApiContext) *errors.ApiError
+type Middleware func(context *apimodels.ApiContext) *errors.ApiError

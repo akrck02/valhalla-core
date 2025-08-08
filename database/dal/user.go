@@ -2,19 +2,21 @@ package dal
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 
 	"github.com/akrck02/valhalla-core/sdk/cryptography"
 	"github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+
 )
 
 func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
-
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -38,12 +40,23 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 		return nil, errors.Unexpected(err.Error())
 	}
 
-	statement, err := db.Prepare("INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)")
+	statement, err := db.Prepare(
+		"INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)",
+	)
+
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
 
-	res, err := statement.Exec(user.Email, user.ProfilePicture, hashedPassword, uuid.NewString(), uuid.NewString(), time.Now())
+	res, err := statement.Exec(
+		user.Email,
+		user.ProfilePicture,
+		hashedPassword,
+		uuid.NewString(),
+		uuid.NewString(),
+		time.Now(),
+	)
+
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
@@ -57,7 +70,6 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 }
 
 func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
-
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -118,7 +130,6 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
-
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -179,7 +190,6 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 }
 
 func DeleteUser(db *sql.DB, id int64) *errors.VError {
-
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -211,7 +221,6 @@ func DeleteUser(db *sql.DB, id int64) *errors.VError {
 }
 
 func UpdateUserEmail(db *sql.DB, id int64, email string) *errors.VError {
-
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -248,7 +257,6 @@ func UpdateUserEmail(db *sql.DB, id int64, email string) *errors.VError {
 }
 
 func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.VError {
-
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -280,11 +288,33 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 	return nil
 }
 
-func Login(db *sql.DB, secret string, email string, password string, device *models.Device) (*string, *errors.VError) {
+
+func Login(
+	db *sql.DB,
+	serviceId string,
+	registeredDomains []string,
+	secret string,
+	email string,
+	password string,
+	device *models.Device,
+) (*string, *errors.VError) {
 
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
+
+	if "" == strings.TrimSpace(serviceId) {
+		return nil, errors.Unexpected("Service id cannot be empty.")
+	}
+
+	if 0 >= len(registeredDomains) {
+		return nil, errors.Unexpected("Registered domains cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(secret) {
+		return nil, errors.Unexpected("Secret cannot be empty.")
+	}
+
 
 	if "" == strings.TrimSpace(email) {
 		return nil, errors.New(errors.InvalidEmail, "Email cannot be empty.")
@@ -300,10 +330,6 @@ func Login(db *sql.DB, secret string, email string, password string, device *mod
 
 	if "" == strings.TrimSpace(device.UserAgent) {
 		return nil, errors.New(errors.InvalidRequest, "Device user agent cannot be empty.")
-	}
-
-	if "" == strings.TrimSpace(device.Token) {
-		return nil, errors.New(errors.InvalidRequest, "Device token cannot be empty.")
 	}
 
 	statement, err := db.Prepare("SELECT id, password FROM user WHERE email = ?")
@@ -330,31 +356,84 @@ func Login(db *sql.DB, secret string, email string, password string, device *mod
 		return nil, errors.New(errors.AccessDenied, "Access denied.")
 	}
 
-	token, err := createUserToken(email, device, secret)
+	token, err := createUserToken(
+		secret,
+		&models.DeviceToken{
+			UserAgent: device.UserAgent,
+			Address:   device.Address,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Audience:  registeredDomains,
+				Issuer:    serviceId,
+				Subject:   email,
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			},
+		},
+	)
 	if nil != err {
 		return nil, errors.New(errors.CannotGenerateAuthToken, err.Error())
 	}
 
 	device.Token = token
-	error := CreateDevice(db, userId, device)
-	if nil != error {
-		return nil, error
+	updateErr := UpdateDeviceToken(db, userId, device.UserAgent, device.Address, device.Token)
+	if nil != updateErr {
+		if errors.NotFound != updateErr.Code {
+			return nil, updateErr
+		}
+
+		error := CreateDevice(db, userId, device)
+		if nil != error {
+			return nil, error
+		}
 	}
 
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, id int64, token string) (*string, *errors.VError) {
-
+func LoginWithAuth(db *sql.DB, secret string, token string) *errors.VError {
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return errors.Unexpected("Database connection cannot be empty.")
 	}
 
-	return nil, nil
+	if "" == strings.TrimSpace(secret) {
+		return errors.Unexpected("Secret cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(token) {
+		return errors.New(errors.InvalidToken, "Token cannot be empty.")
+	}
+
+	device, err := getDeviceFromUserToken(secret, token)
+	if nil != err {
+		return errors.New(errors.InvalidToken, err.Error())
+	}
+
+	user, getUserErr := GetUserByEmail(db, device.Subject)
+	if nil != getUserErr {
+		return getUserErr
+	}
+
+	statement, err := db.Prepare(
+		"SELECT user_id, address, user_agent FROM device WHERE user_id = ? AND address = ? AND user_agent = ? AND token = ?",
+	)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	rows, err := statement.Query(user.Id, device.Address, device.UserAgent, token)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return errors.New(errors.InvalidToken, "Token is not valid.")
+	}
+
+	return nil
 }
 
 func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
-
 	if nil == db {
 		return errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -362,19 +441,33 @@ func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
 	return nil
 }
 
-func createUserToken(email string, device *models.Device, secret string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"email":      email,
-			"address":    device.Address,
-			"user_agent": device.UserAgent,
-			"exp":        time.Now().Add(time.Hour * 24).Unix(),
-		})
-
-	tokenString, err := token.SignedString([]byte(secret))
+func createUserToken(secret string, token *models.DeviceToken) (string, error) {
+	token.Seed = uuid.NewString() + time.Nanosecond.String()
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, token)
+	tokenString, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error parsing token: %s", err.Error())
 	}
 
 	return tokenString, nil
+}
+
+func getDeviceFromUserToken(secret string, token string) (*models.DeviceToken, error) {
+	parsedToken, err := jwt.ParseWithClaims(
+		token,
+		&models.DeviceToken{},
+		func(t *jwt.Token) (any, error) {
+			return []byte(secret), nil
+		},
+	)
+
+	if nil != err {
+		return nil, err
+	}
+
+	if claims, ok := parsedToken.Claims.(*models.DeviceToken); ok && parsedToken.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("Token %s is invalid", token)
 }

@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/akrck02/valhalla-core/database"
+	"github.com/akrck02/valhalla-core/database/tables"
 	"github.com/akrck02/valhalla-core/modules/api/configuration"
 	"github.com/akrck02/valhalla-core/modules/api/middleware"
 	"github.com/akrck02/valhalla-core/modules/api/models"
 	"github.com/akrck02/valhalla-core/modules/api/services"
 	"github.com/akrck02/valhalla-core/sdk/errors"
+	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
 const API_PATH = "/"
@@ -26,7 +29,7 @@ var ApiMiddlewares = []middleware.Middleware{
 	middleware.Checks,
 }
 
-func startApi(configuration configuration.APIConfiguration, endpoints []models.Endpoint) {
+func startApi(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
 
 	// show log app title and start router
 	log.Println("-----------------------------------")
@@ -34,7 +37,7 @@ func startApi(configuration configuration.APIConfiguration, endpoints []models.E
 	log.Println("-----------------------------------")
 
 	// Add API path to endpoints
-	newEndpoints := []models.Endpoint{}
+	newEndpoints := []apimodels.Endpoint{}
 	for _, endpoint := range endpoints {
 		endpoint.Path = API_PATH + configuration.ApiName + "/" + configuration.Version + "/" + endpoint.Path
 		newEndpoints = append(newEndpoints, endpoint)
@@ -50,20 +53,20 @@ func startApi(configuration configuration.APIConfiguration, endpoints []models.E
 
 }
 
-func registerEndpoints(endpoints []models.Endpoint) {
+func registerEndpoints(endpoints []apimodels.Endpoint) {
 
 	for _, endpoint := range endpoints {
 
 		switch endpoint.Method {
-		case models.GetMethod:
+		case apimodels.GetMethod:
 			endpoint.Path = fmt.Sprintf("GET %s", endpoint.Path)
-		case models.PostMethod:
+		case apimodels.PostMethod:
 			endpoint.Path = fmt.Sprintf("POST %s", endpoint.Path)
-		case models.PutMethod:
+		case apimodels.PutMethod:
 			endpoint.Path = fmt.Sprintf("PUT %s", endpoint.Path)
-		case models.DeleteMethod:
+		case apimodels.DeleteMethod:
 			endpoint.Path = fmt.Sprintf("DELETE %s", endpoint.Path)
-		case models.PatchMethod:
+		case apimodels.PatchMethod:
 			endpoint.Path = fmt.Sprintf("PATCH %s", endpoint.Path)
 		}
 
@@ -81,8 +84,8 @@ func registerEndpoints(endpoints []models.Endpoint) {
 			writer.Header().Set("Access-Control-Max-Age", os.Getenv("CORS_MAX_AGE"))
 
 			// create basic api context
-			context := &models.ApiContext{
-				Trazability: models.Trazability{
+			context := &apimodels.ApiContext{
+				Trazability: apimodels.Trazability{
 					Endpoint: endpoint,
 				},
 			}
@@ -90,14 +93,14 @@ func registerEndpoints(endpoints []models.Endpoint) {
 			// Get request data
 			err := middleware.Request(reader, context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, models.MimeApplicationJson)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
 				return
 			}
 
 			// Apply middleware to the request
 			err = applyMiddleware(context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, models.MimeApplicationJson)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
 				return
 			}
 
@@ -107,7 +110,7 @@ func registerEndpoints(endpoints []models.Endpoint) {
 	}
 }
 
-func setEndpointDefaults(endpoint *models.Endpoint) {
+func setEndpointDefaults(endpoint *apimodels.Endpoint) {
 
 	if nil == endpoint.Checks {
 		endpoint.Checks = services.EmptyCheck
@@ -118,16 +121,16 @@ func setEndpointDefaults(endpoint *models.Endpoint) {
 	}
 
 	if endpoint.RequestMimeType == "" {
-		endpoint.RequestMimeType = models.MimeApplicationJson
+		endpoint.RequestMimeType = apimodels.MimeApplicationJson
 	}
 
 	if endpoint.ResponseMimeType == "" {
-		endpoint.ResponseMimeType = models.MimeApplicationJson
+		endpoint.ResponseMimeType = apimodels.MimeApplicationJson
 	}
 
 }
 
-func applyMiddleware(context *models.ApiContext) *errors.ApiError {
+func applyMiddleware(context *apimodels.ApiContext) *errors.ApiError {
 
 	for _, middleware := range ApiMiddlewares {
 		err := middleware(context)
@@ -140,16 +143,21 @@ func applyMiddleware(context *models.ApiContext) *errors.ApiError {
 }
 
 func Start() {
-
 	configuration := configuration.LoadConfiguration(ENV_FILE_PATH)
-	startApi(configuration, []models.Endpoint{
-		{
-			Path:     "health",
-			Method:   models.GetMethod,
-			Listener: services.Health,
-			Checks:   services.EmptyCheck,
-			Secured:  false,
-			Database: true,
-		},
-	})
+
+	db, err := database.Connect("valhalla.db")
+	if nil != err {
+		logger.Error(err)
+		return
+	}
+
+	err = tables.UpdateDatabaseTablesToLatestVersion(".", tables.MainDatabase, db)
+	if nil != err {
+		logger.Error(err)
+		return
+	}
+
+	db.Close()
+
+	startApi(configuration, EndpointRegistry)
 }

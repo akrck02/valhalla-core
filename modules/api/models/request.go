@@ -1,4 +1,4 @@
-package models
+package apimodels
 
 type Request struct {
 	Authorization string            `json:"authorization,omitempty"`

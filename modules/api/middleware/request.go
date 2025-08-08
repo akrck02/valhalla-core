@@ -11,21 +11,20 @@ import (
 const USER_AGENT_HEADER = "User-Agent"
 
 // Request handler middleware function
-func Request(r *http.Request, context *models.ApiContext) *errors.ApiError {
-
+func Request(r *http.Request, context *apimodels.ApiContext) *errors.ApiError {
 	parserError := r.ParseForm()
 
 	if parserError != nil {
 		return &errors.ApiError{
 			Status: http.StatusBadRequest,
-			Error: errors.VError{
+			VError: errors.VError{
 				Code:    errors.InvalidRequest,
 				Message: parserError.Error(),
 			},
 		}
 	}
 
-	context.Request = models.Request{
+	context.Request = apimodels.Request{
 		Authorization: r.Header.Get(AUTHORITATION_HEADER),
 		Ip:            r.Host,
 		UserAgent:     r.Header.Get(USER_AGENT_HEADER),
@@ -66,9 +65,8 @@ func Request(r *http.Request, context *models.ApiContext) *errors.ApiError {
 func getPathParamNames(path string) []string {
 	params := []string{}
 
-	//regex to find path parameters
+	// regex to find path parameters
 	regex, err := regexp.Compile("{(.*?)}")
-
 	if err != nil {
 		return params
 	}

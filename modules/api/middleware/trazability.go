@@ -7,11 +7,11 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-func Trazability(context *models.ApiContext) *errors.ApiError {
+func Trazability(context *apimodels.ApiContext) *errors.ApiError {
 
 	time := time.Now().UnixMilli()
 
-	context.Trazability = models.Trazability{
+	context.Trazability = apimodels.Trazability{
 		Endpoint:  context.Trazability.Endpoint,
 		Timestamp: &time,
 	}
