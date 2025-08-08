@@ -7,7 +7,6 @@ import (
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 	"github.com/akrck02/valhalla-core/sdk/errors"
 	inout "github.com/akrck02/valhalla-core/sdk/io"
-	"github.com/akrck02/valhalla-core/sdk/logger"
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
@@ -23,7 +22,6 @@ func RegisterCheck(context *apimodels.ApiContext) *errors.ApiError {
 		}
 	}
 
-	logger.Log(user)
 	context.Request.Body = user
 	return nil
 }
