@@ -1,4 +1,4 @@
-package models
+package apimodels
 
 type Response struct {
 	Code         int         `json:"-"`

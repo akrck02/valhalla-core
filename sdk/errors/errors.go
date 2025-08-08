@@ -7,7 +7,7 @@ type VError struct {
 
 type ApiError struct {
 	Status int `json:"status,omitempty"`
-	Error  VError
+	VError
 }
 
 func TODO() VError {

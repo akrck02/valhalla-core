@@ -15,10 +15,10 @@ const CONTENT_TYPE_HEADER = "Content-Type"
 type EmptyResponse struct{}
 
 // Response handle middleware function
-func Response(context *models.ApiContext, writer http.ResponseWriter) {
+func Response(context *apimodels.ApiContext, writer http.ResponseWriter) {
 
 	switch context.Trazability.Endpoint.ResponseMimeType {
-	case models.MimeApplicationJson:
+	case apimodels.MimeApplicationJson:
 		sendJsonCatchingErrors(context, writer)
 	default:
 		sendResponseCatchingErrors(context, writer)
@@ -26,14 +26,14 @@ func Response(context *models.ApiContext, writer http.ResponseWriter) {
 }
 
 // Send HTTP response
-func SendResponse(w http.ResponseWriter, status int, response interface{}, contentType models.MimeType) {
+func SendResponse(w http.ResponseWriter, status int, response interface{}, contentType apimodels.MimeType) {
 	w.Header().Set(CONTENT_TYPE_HEADER, string(contentType))
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
 
 // Send json data catching errors
-func sendJsonCatchingErrors(context *models.ApiContext, writer http.ResponseWriter) {
+func sendJsonCatchingErrors(context *apimodels.ApiContext, writer http.ResponseWriter) {
 
 	// calculate the time of the request
 	start := time.Now()
@@ -48,13 +48,13 @@ func sendJsonCatchingErrors(context *models.ApiContext, writer http.ResponseWrit
 	// if something went wrong, return error
 	if nil != responseError {
 		logger.Error(context.Trazability.Endpoint.Path, elapsed.Nanoseconds(), "ns")
-		SendResponse(writer, responseError.Status, responseError, models.MimeApplicationJson)
+		SendResponse(writer, responseError.Status, responseError, apimodels.MimeApplicationJson)
 		return
 	}
 
 	// if response is nil, return {}
 	if nil == response {
-		response = &models.Response{
+		response = &apimodels.Response{
 			Code:     http.StatusNoContent,
 			Response: EmptyResponse{},
 		}
@@ -63,18 +63,18 @@ func sendJsonCatchingErrors(context *models.ApiContext, writer http.ResponseWrit
 	// send response
 	response.ResponseTime = elapsed.Nanoseconds()
 	context.Response = *response
-	SendResponse(writer, response.Code, response, models.MimeApplicationJson)
+	SendResponse(writer, response.Code, response, apimodels.MimeApplicationJson)
 	logger.Success(context.Trazability.Endpoint.Path, response.ResponseTime, "ns")
 }
 
 // Send HTTP response catching errors
-func sendResponseCatchingErrors(context *models.ApiContext, writer http.ResponseWriter) {
+func sendResponseCatchingErrors(context *apimodels.ApiContext, writer http.ResponseWriter) {
 	// execute the function
 	result, responseError := context.Trazability.Endpoint.Listener(context)
 
 	// if something went wrong, return error
 	if nil != responseError {
-		SendResponse(writer, responseError.Status, responseError, models.MimeApplicationJson)
+		SendResponse(writer, responseError.Status, responseError, apimodels.MimeApplicationJson)
 		return
 	}
 

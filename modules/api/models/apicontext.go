@@ -1,4 +1,4 @@
-package models
+package apimodels
 
 type ApiContext struct {
 	Trazability Trazability

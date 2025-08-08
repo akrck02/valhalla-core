@@ -1,4 +1,4 @@
-package models
+package apimodels
 
 type HttpMethod int
 

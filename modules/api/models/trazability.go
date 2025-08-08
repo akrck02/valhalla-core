@@ -1,4 +1,4 @@
-package models
+package apimodels
 
 type Trazability struct {
 	Endpoint  Endpoint `json:"endpoint"`
