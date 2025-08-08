@@ -2,6 +2,7 @@ package dal
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -280,10 +281,22 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 	return nil
 }
 
-func Login(db *sql.DB, secret string, email string, password string, device *models.Device) (*string, *errors.VError) {
+func Login(db *sql.DB, serviceId string, registeredDomains []string, secret string, email string, password string, device *models.Device) (*string, *errors.VError) {
 
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(serviceId) {
+		return nil, errors.Unexpected("Service id cannot be empty.")
+	}
+
+	if 0 >= len(registeredDomains) {
+		return nil, errors.Unexpected("Registered domains cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(secret) {
+		return nil, errors.Unexpected("Secret cannot be empty.")
 	}
 
 	if "" == strings.TrimSpace(email) {
@@ -300,10 +313,6 @@ func Login(db *sql.DB, secret string, email string, password string, device *mod
 
 	if "" == strings.TrimSpace(device.UserAgent) {
 		return nil, errors.New(errors.InvalidRequest, "Device user agent cannot be empty.")
-	}
-
-	if "" == strings.TrimSpace(device.Token) {
-		return nil, errors.New(errors.InvalidRequest, "Device token cannot be empty.")
 	}
 
 	statement, err := db.Prepare("SELECT id, password FROM user WHERE email = ?")
@@ -330,7 +339,20 @@ func Login(db *sql.DB, secret string, email string, password string, device *mod
 		return nil, errors.New(errors.AccessDenied, "Access denied.")
 	}
 
-	token, err := createUserToken(email, device, secret)
+	token, err := createUserToken(
+		secret,
+		&models.DeviceToken{
+			UserAgent: device.UserAgent,
+			Address:   device.Address,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Audience:  registeredDomains,
+				Issuer:    serviceId,
+				Subject:   email,
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			},
+		},
+	)
 	if nil != err {
 		return nil, errors.New(errors.CannotGenerateAuthToken, err.Error())
 	}
@@ -344,10 +366,14 @@ func Login(db *sql.DB, secret string, email string, password string, device *mod
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, id int64, token string) (*string, *errors.VError) {
+func LoginWithAuth(db *sql.DB, token string) (*string, *errors.VError) {
 
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(token) {
+		return nil, errors.New(errors.InvalidRequest, "Token cannot be empty.")
 	}
 
 	return nil, nil
@@ -362,19 +388,30 @@ func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
 	return nil
 }
 
-func createUserToken(email string, device *models.Device, secret string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"email":      email,
-			"address":    device.Address,
-			"user_agent": device.UserAgent,
-			"exp":        time.Now().Add(time.Hour * 24).Unix(),
-		})
-
-	tokenString, err := token.SignedString([]byte(secret))
+func createUserToken(secret string, token *models.DeviceToken) (string, error) {
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, token)
+	tokenString, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error parsing token: %s", err.Error())
 	}
 
 	return tokenString, nil
+}
+
+func getDeviceFromUserToken(secret string, token string) (*models.DeviceToken, error) {
+
+	parsedToken, err := jwt.ParseWithClaims(token, &models.DeviceToken{}, func(t *jwt.Token) (any, error) {
+		return []byte(secret), nil
+	})
+
+	if nil != err {
+		return nil, err
+	}
+
+	if claims, ok := parsedToken.Claims.(*models.DeviceToken); ok && parsedToken.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("Token %s is invalid", token)
+
 }
