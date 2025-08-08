@@ -358,25 +358,61 @@ func Login(db *sql.DB, serviceId string, registeredDomains []string, secret stri
 	}
 
 	device.Token = token
-	error := CreateDevice(db, userId, device)
-	if nil != error {
-		return nil, error
+	updateErr := UpdateDeviceToken(db, userId, device.UserAgent, device.Address, device.Token)
+	if nil != updateErr {
+		if errors.NotFound != updateErr.Code {
+			return nil, updateErr
+		}
+
+		error := CreateDevice(db, userId, device)
+		if nil != error {
+			return nil, error
+		}
 	}
 
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, token string) (*string, *errors.VError) {
+func LoginWithAuth(db *sql.DB, secret string, token string) *errors.VError {
 
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return errors.Unexpected("Database connection cannot be empty.")
+	}
+
+	if "" == strings.TrimSpace(secret) {
+		return errors.Unexpected("Secret cannot be empty.")
 	}
 
 	if "" == strings.TrimSpace(token) {
-		return nil, errors.New(errors.InvalidRequest, "Token cannot be empty.")
+		return errors.New(errors.InvalidToken, "Token cannot be empty.")
 	}
 
-	return nil, nil
+	device, err := getDeviceFromUserToken(secret, token)
+	if nil != err {
+		return errors.New(errors.InvalidToken, err.Error())
+	}
+
+	user, getUserErr := GetUserByEmail(db, device.Subject)
+	if nil != getUserErr {
+		return getUserErr
+	}
+
+	statement, err := db.Prepare("SELECT user_id, address, user_agent FROM device WHERE user_id = ? AND address = ? AND user_agent = ? AND token = ?")
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+
+	rows, err := statement.Query(user.Id, device.Address, device.UserAgent, token)
+	if nil != err {
+		return errors.New(errors.DatabaseError, err.Error())
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return errors.New(errors.InvalidToken, "Token is not valid.")
+	}
+
+	return nil
 }
 
 func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
@@ -389,6 +425,7 @@ func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
 }
 
 func createUserToken(secret string, token *models.DeviceToken) (string, error) {
+	token.Seed = uuid.NewString() + time.Nanosecond.String()
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, token)
 	tokenString, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {

@@ -13,5 +13,6 @@ type Device struct {
 type DeviceToken struct {
 	Address   string `json:"ad,omitempty"`
 	UserAgent string `json:"ua,omitempty"`
+	Seed      string `json:"sd,omitempty"`
 	jwt.RegisteredClaims
 }
