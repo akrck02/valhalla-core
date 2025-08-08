@@ -13,6 +13,7 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
+
 )
 
 func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
@@ -42,6 +43,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 	statement, err := db.Prepare(
 		"INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)",
 	)
+
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
@@ -54,6 +56,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 		uuid.NewString(),
 		time.Now(),
 	)
+
 	if nil != err {
 		return nil, errors.New(errors.DatabaseError, err.Error())
 	}
@@ -285,6 +288,7 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 	return nil
 }
 
+
 func Login(
 	db *sql.DB,
 	serviceId string,
@@ -294,6 +298,7 @@ func Login(
 	password string,
 	device *models.Device,
 ) (*string, *errors.VError) {
+
 	if nil == db {
 		return nil, errors.Unexpected("Database connection cannot be empty.")
 	}
@@ -309,6 +314,7 @@ func Login(
 	if "" == strings.TrimSpace(secret) {
 		return nil, errors.Unexpected("Secret cannot be empty.")
 	}
+
 
 	if "" == strings.TrimSpace(email) {
 		return nil, errors.New(errors.InvalidEmail, "Email cannot be empty.")

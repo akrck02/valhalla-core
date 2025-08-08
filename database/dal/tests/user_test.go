@@ -235,7 +235,6 @@ func login(t *testing.T, db *sql.DB) {
 	device, err = dal.GetDevice(db, 1, "Firefox", "127.0.0.1")
 	AssertVErrorDoesNotExist(t, err)
 	Assert(t, device.Token == *token, "Token mismatch")
-
 }
 
 func loginWithAuthValidation(t *testing.T, db *sql.DB) {
@@ -251,7 +250,6 @@ func loginWithAuthValidation(t *testing.T, db *sql.DB) {
 
 	err = dal.LoginWithAuth(db, "secret", "token")
 	AssertVError(t, err, errors.InvalidToken, "token is malformed: token contains an invalid number of segments")
-
 }
 
 func loginWithAuth(t *testing.T, db *sql.DB) {
@@ -275,6 +273,7 @@ func loginWithAuth(t *testing.T, db *sql.DB) {
 
 	err = dal.LoginWithAuth(db, "secret1", *token)
 	AssertVError(t, err, errors.InvalidToken, "token signature is invalid: signature is invalid")
+
 }
 
 func validateUserAccountValidation(t *testing.T, db *sql.DB) {

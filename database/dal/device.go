@@ -32,6 +32,7 @@ func CreateDevice(db *sql.DB, userId int64, device *models.Device) *errors.VErro
 	return nil
 }
 
+
 func GetDevice(db *sql.DB, userId int64, userAgent string, address string) (*models.Device, *errors.VError) {
 
 	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ? AND user_agent = ? AND address = ?")
