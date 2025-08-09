@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
+	"github.com/akrck02/valhalla-core/database"
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
@@ -16,8 +16,6 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 		return nil
 	}
 
-	log.Printf("Endpoint %s is secured", context.Trazability.Endpoint.Path)
-
 	// Check if token is empty
 	if context.Request.Authorization == "" {
 		return &verrors.APIError{
@@ -28,6 +26,16 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 			},
 		}
 	}
+
+	db, err := database.Connect("valhalla.db")
+	if nil != err {
+		return verrors.NewAPIError(&verrors.VError{
+			Code:    verrors.DatabaseError,
+			Message: "Cannot connect to database.",
+		})
+	}
+
+	context.Database = db
 
 	// Check if token is valid
 	if !tokenIsValid(context.Request.Authorization) {

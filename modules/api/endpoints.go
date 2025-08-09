@@ -7,4 +7,9 @@ import (
 
 var EndpointRegistry = []apimodels.Endpoint{
 	userservice.UserRegisterEndpoint,
+	userservice.UserGetEndpoint,
+	userservice.UserGetByEmailEndpoint,
+	userservice.UserUpdateEmailEndpoint,
+	userservice.UserUpdatePasswordEndpoint,
+	userservice.UserUpdateProfilePicEndpoint,
 }

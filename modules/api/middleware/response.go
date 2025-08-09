@@ -39,15 +39,11 @@ func sendJSONHandlingErrors(context *apimodels.APIContext, writer http.ResponseW
 	// execute the function
 	response, responseError := context.Trazability.Endpoint.Listener(context)
 
-	// calculate the time of the response
-	end := time.Now()
-	elapsed := end.Sub(start)
-
 	// if something went wrong, return error
 	if nil != responseError {
 		logger.Error(
 			context.Trazability.Endpoint.Path,
-			elapsed.Microseconds(),
+			time.Since(start).Microseconds(),
 			"μs -",
 			fmt.Sprintf("[%d]", responseError.Status),
 			responseError.Message,
@@ -65,12 +61,12 @@ func sendJSONHandlingErrors(context *apimodels.APIContext, writer http.ResponseW
 	}
 
 	// send response
-	response.ResponseTime = elapsed.Nanoseconds()
+	response.ResponseTime = time.Since(start).Nanoseconds()
 	context.Response = *response
 	SendResponse(writer, response.Code, response, apimodels.MineApplicationJSON)
 	logger.Success(
 		context.Trazability.Endpoint.Path,
-		elapsed.Microseconds(),
+		time.Since(start).Microseconds(),
 		"μs -",
 		fmt.Sprintf("[%d]", response.Code),
 	)

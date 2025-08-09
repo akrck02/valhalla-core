@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/akrck02/valhalla-core/database"
 	"github.com/akrck02/valhalla-core/database/tables"
@@ -83,6 +84,9 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			writer.Header().Set("Access-Control-Allow-Headers", os.Getenv("CORS_HEADERS"))
 			writer.Header().Set("Access-Control-Max-Age", os.Getenv("CORS_MAX_AGE"))
 
+			// calculate the time of the request
+			start := time.Now()
+
 			// create basic api context
 			context := &apimodels.APIContext{
 				Trazability: apimodels.Trazability{
@@ -93,6 +97,14 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			// Get request data
 			err := middleware.Request(reader, context)
 			if nil != err {
+				logger.Error(
+					context.Trazability.Endpoint.Path,
+					time.Since(start).Microseconds(),
+					"μs -",
+					fmt.Sprintf("[%d]", err.Status),
+					err.Message,
+				)
+
 				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
@@ -100,6 +112,14 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			// Apply middleware to the request
 			err = applyMiddleware(context)
 			if nil != err {
+				logger.Error(
+					context.Trazability.Endpoint.Path,
+					time.Since(start).Microseconds(),
+					"μs -",
+					fmt.Sprintf("[%d]", err.Status),
+					err.Message,
+				)
+
 				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
