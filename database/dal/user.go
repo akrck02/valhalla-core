@@ -2,6 +2,7 @@ package dal
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -10,40 +11,49 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/akrck02/valhalla-core/sdk/cryptography"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
 )
 
-func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
+func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if nil == user {
-		return nil, errors.New(errors.InvalidRequest, "User cannot be empty.")
+		return nil, verrors.New(verrors.InvalidRequest, verrors.UserEmptyMessage)
 	}
 
 	err := validations.ValidateEmail(user.Email)
 	if nil != err {
-		return nil, errors.New(errors.InvalidEmail, err.Error())
+		return nil, verrors.New(verrors.InvalidEmail, err.Error())
+	}
+
+	usr, userGetErr := GetUserByEmail(db, user.Email)
+	if nil == userGetErr && nil != usr {
+		return nil, verrors.New(verrors.UserAlreadyExists, verrors.UserAlreadyExistsMessage)
+	}
+
+	if userGetErr.Code != verrors.NotFound {
+		return nil, userGetErr
 	}
 
 	err = validations.ValidatePassword(user.Password)
 	if nil != err {
-		return nil, errors.New(errors.InvalidPassword, err.Error())
+		return nil, verrors.New(verrors.InvalidPassword, err.Error())
 	}
 
 	hashedPassword, err := cryptography.Hash(user.Password)
 	if nil != err {
-		return nil, errors.Unexpected(err.Error())
+		return nil, verrors.Unexpected(err.Error())
 	}
 
 	statement, err := db.Prepare(
 		"INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)",
 	)
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	res, err := statement.Exec(
@@ -55,24 +65,24 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *errors.VError) {
 		time.Now(),
 	)
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	user.Id, err = res.LastInsertId()
+	user.ID, err = res.LastInsertId()
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	return &user.Id, nil
+	return &user.ID, nil
 }
 
-func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
+func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if 0 >= id {
-		return nil, errors.New(errors.InvalidId, "User id must be positive.")
+		return nil, verrors.New(verrors.InvalidID, verrors.UserIDNegativeMessage)
 	}
 
 	statement, err := db.Prepare(`
@@ -87,20 +97,20 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	`)
 
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	rows, err := statement.Query(id)
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, errors.New(errors.NotFound, "User not found.")
+		return nil, verrors.New(verrors.NotFound, verrors.UserNotFoundMessage)
 	}
 
-	var obtainedId int64
+	var obtainedID int64
 	var email string
 	var profilePicture string
 	var password string
@@ -108,7 +118,7 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	var insertDate int64
 
 	rows.Scan(
-		&obtainedId,
+		&obtainedID,
 		&email,
 		&profilePicture,
 		&password,
@@ -117,7 +127,7 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	)
 
 	return &models.User{
-		Id:             obtainedId,
+		ID:             obtainedID,
 		Email:          email,
 		ProfilePicture: profilePicture,
 		Password:       password,
@@ -126,13 +136,13 @@ func GetUser(db *sql.DB, id int64) (*models.User, *errors.VError) {
 	}, nil
 }
 
-func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
+func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(email) {
-		return nil, errors.New(errors.InvalidId, "User id must be positive")
+	if strings.TrimSpace(email) == "" {
+		return nil, verrors.New(verrors.InvalidID, verrors.UserIDNegativeMessage)
 	}
 
 	statement, err := db.Prepare(`
@@ -147,17 +157,17 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 	`)
 
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	rows, err := statement.Query(email)
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, errors.New(errors.NotFound, "User not found.")
+		return nil, verrors.New(verrors.NotFound, verrors.UserNotFoundMessage)
 	}
 
 	var id int64
@@ -177,7 +187,7 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 	)
 
 	return &models.User{
-		Id:             id,
+		ID:             id,
 		Email:          obtainedEmail,
 		ProfilePicture: profilePicture,
 		Password:       password,
@@ -186,100 +196,100 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *errors.VError) {
 	}, nil
 }
 
-func DeleteUser(db *sql.DB, id int64) *errors.VError {
+func DeleteUser(db *sql.DB, id int64) *verrors.VError {
 	if nil == db {
-		return errors.Unexpected("Database connection cannot be empty.")
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if 0 >= id {
-		return errors.New(errors.InvalidId, "User id must be positive.")
+		return verrors.New(verrors.InvalidID, verrors.UserIDNegativeMessage)
 	}
 
 	statement, err := db.Prepare("DELETE FROM user WHERE id=?")
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	res, err := statement.Exec(id)
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	if 0 == affectedRows {
-		return errors.New(errors.DatabaseError, "Cannot delete user.")
+	if affectedRows == 0 {
+		return verrors.New(verrors.DatabaseError, verrors.UserCannotDeleteMessage)
 	}
 
 	return nil
 }
 
-func UpdateUserEmail(db *sql.DB, id int64, email string) *errors.VError {
+func UpdateUserEmail(db *sql.DB, id int64, email string) *verrors.VError {
 	if nil == db {
-		return errors.Unexpected("Database connection cannot be empty.")
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if 0 >= id {
-		return errors.New(errors.InvalidId, "User id must be positive.")
+		return verrors.New(verrors.InvalidID, verrors.UserIDNegativeMessage)
 	}
 
 	err := validations.ValidateEmail(email)
 	if nil != err {
-		return errors.New(errors.InvalidEmail, err.Error())
+		return verrors.New(verrors.InvalidEmail, err.Error())
 	}
 
 	statement, err := db.Prepare("UPDATE user SET email = ? WHERE id = ?")
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	res, err := statement.Exec(email, id)
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	if 0 == affectedRows {
-		return errors.New(errors.DatabaseError, "Cannot update user.")
+	if affectedRows == 0 {
+		return verrors.New(verrors.DatabaseError, verrors.UserCannotUpdateMessage)
 	}
 
 	return nil
 }
 
-func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.VError {
+func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *verrors.VError {
 	if nil == db {
-		return errors.Unexpected("Database connection cannot be empty.")
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if 0 >= id {
-		return errors.New(errors.InvalidId, "User id must be positive.")
+		return verrors.New(verrors.InvalidID, verrors.UserIDNegativeMessage)
 	}
 
 	statement, err := db.Prepare("UPDATE user SET profile_pic = ? WHERE id = ?")
 
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	res, err := statement.Exec(profilePic, id)
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	if 0 == affectedRows {
-		return errors.New(errors.DatabaseError, "Cannot update user.")
+	if affectedRows == 0 {
+		return verrors.New(verrors.DatabaseError, verrors.UserCannotUpdateMessage)
 	}
 
 	return nil
@@ -287,67 +297,67 @@ func UpdateUserProfilePicture(db *sql.DB, id int64, profilePic string) *errors.V
 
 func Login(
 	db *sql.DB,
-	serviceId string,
+	serviceID string,
 	registeredDomains []string,
 	secret string,
 	email string,
 	password string,
 	device *models.Device,
-) (*string, *errors.VError) {
+) (*string, *verrors.VError) {
 	if nil == db {
-		return nil, errors.Unexpected("Database connection cannot be empty.")
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(serviceId) {
-		return nil, errors.Unexpected("Service id cannot be empty.")
+	if strings.TrimSpace(serviceID) == "" {
+		return nil, verrors.Unexpected(verrors.ServiceIDEmptyMessage)
 	}
 
 	if 0 >= len(registeredDomains) {
-		return nil, errors.Unexpected("Registered domains cannot be empty.")
+		return nil, verrors.Unexpected(verrors.RegisteredDomainsEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(secret) {
-		return nil, errors.Unexpected("Secret cannot be empty.")
+	if strings.TrimSpace(secret) == "" {
+		return nil, verrors.Unexpected(verrors.SecretEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(email) {
-		return nil, errors.New(errors.InvalidEmail, "Email cannot be empty.")
+	if strings.TrimSpace(email) == "" {
+		return nil, verrors.New(verrors.InvalidEmail, verrors.EmailEmptyMessage)
 	}
 
 	if nil == device {
-		return nil, errors.New(errors.InvalidRequest, "Device cannot be empty.")
+		return nil, verrors.New(verrors.InvalidRequest, verrors.DeviceEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(device.Address) {
-		return nil, errors.New(errors.InvalidRequest, "Device address cannot be empty.")
+	if strings.TrimSpace(device.Address) == "" {
+		return nil, verrors.New(verrors.InvalidRequest, verrors.DeviceAddressEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(device.UserAgent) {
-		return nil, errors.New(errors.InvalidRequest, "Device user agent cannot be empty.")
+	if strings.TrimSpace(device.UserAgent) == "" {
+		return nil, verrors.New(verrors.InvalidRequest, verrors.DeviceUserAgentEmptyMessage)
 	}
 
 	statement, err := db.Prepare("SELECT id, password FROM user WHERE email = ?")
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
 	rows, err := statement.Query(email)
 	if nil != err {
-		return nil, errors.New(errors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	if false == rows.Next() {
-		return nil, errors.New(errors.AccessDenied, "Access denied.")
+	if !rows.Next() {
+		return nil, verrors.New(verrors.AccessDenied, verrors.AccessDeniedMessage)
 	}
 
-	var userId int64
+	var userID int64
 	var hash string
-	rows.Scan(&userId, &hash)
+	rows.Scan(&userID, &hash)
 	rows.Close()
 
 	err = cryptography.CompareHash(hash, password)
 	if nil != err {
-		return nil, errors.New(errors.AccessDenied, "Access denied.")
+		return nil, verrors.New(verrors.AccessDenied, verrors.AccessDeniedMessage)
 	}
 
 	token, err := createUserToken(
@@ -357,7 +367,7 @@ func Login(
 			Address:   device.Address,
 			RegisteredClaims: jwt.RegisteredClaims{
 				Audience:  registeredDomains,
-				Issuer:    serviceId,
+				Issuer:    serviceID,
 				Subject:   email,
 				IssuedAt:  jwt.NewNumericDate(time.Now()),
 				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
@@ -365,17 +375,17 @@ func Login(
 		},
 	)
 	if nil != err {
-		return nil, errors.New(errors.CannotGenerateAuthToken, err.Error())
+		return nil, verrors.New(verrors.CannotGenerateAuthToken, err.Error())
 	}
 
 	device.Token = token
-	updateErr := UpdateDeviceToken(db, userId, device.UserAgent, device.Address, device.Token)
+	updateErr := UpdateDeviceToken(db, userID, device.UserAgent, device.Address, device.Token)
 	if nil != updateErr {
-		if errors.NotFound != updateErr.Code {
+		if verrors.NotFound != updateErr.Code {
 			return nil, updateErr
 		}
 
-		error := CreateDevice(db, userId, device)
+		error := CreateDevice(db, userID, device)
 		if nil != error {
 			return nil, error
 		}
@@ -384,22 +394,22 @@ func Login(
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, secret string, token string) *errors.VError {
+func LoginWithAuth(db *sql.DB, secret string, token string) *verrors.VError {
 	if nil == db {
-		return errors.Unexpected("Database connection cannot be empty.")
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(secret) {
-		return errors.Unexpected("Secret cannot be empty.")
+	if strings.TrimSpace(secret) == "" {
+		return verrors.Unexpected(verrors.SecretEmptyMessage)
 	}
 
-	if "" == strings.TrimSpace(token) {
-		return errors.New(errors.InvalidToken, "Token cannot be empty.")
+	if strings.TrimSpace(token) == "" {
+		return verrors.New(verrors.InvalidToken, verrors.TokenEmptyMessage)
 	}
 
 	device, err := getDeviceFromUserToken(secret, token)
 	if nil != err {
-		return errors.New(errors.InvalidToken, err.Error())
+		return verrors.New(verrors.InvalidToken, err.Error())
 	}
 
 	user, getUserErr := GetUserByEmail(db, device.Subject)
@@ -411,25 +421,25 @@ func LoginWithAuth(db *sql.DB, secret string, token string) *errors.VError {
 		"SELECT user_id, address, user_agent FROM device WHERE user_id = ? AND address = ? AND user_agent = ? AND token = ?",
 	)
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 
-	rows, err := statement.Query(user.Id, device.Address, device.UserAgent, token)
+	rows, err := statement.Query(user.ID, device.Address, device.UserAgent, token)
 	if nil != err {
-		return errors.New(errors.DatabaseError, err.Error())
+		return verrors.New(verrors.DatabaseError, err.Error())
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		return errors.New(errors.InvalidToken, "Token is not valid.")
+		return verrors.New(verrors.InvalidToken, verrors.TokenInvalidMessage)
 	}
 
 	return nil
 }
 
-func ValidateUserAccount(db *sql.DB, code string) *errors.VError {
+func ValidateUserAccount(db *sql.DB, code string) *verrors.VError {
 	if nil == db {
-		return errors.Unexpected("Database connection cannot be empty.")
+		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	return nil
@@ -440,7 +450,7 @@ func createUserToken(secret string, token *models.DeviceToken) (string, error) {
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, token)
 	tokenString, err := jwtToken.SignedString([]byte(secret))
 	if err != nil {
-		return "", fmt.Errorf("Error parsing token: %s", err.Error())
+		return "", fmt.Errorf("error parsing token: %s", err.Error())
 	}
 
 	return tokenString, nil
@@ -463,5 +473,5 @@ func getDeviceFromUserToken(secret string, token string) (*models.DeviceToken, e
 		return claims, nil
 	}
 
-	return nil, fmt.Errorf("Token %s is invalid", token)
+	return nil, errors.New(verrors.TokenInvalidMessage)
 }

@@ -5,18 +5,17 @@ import (
 	"testing"
 
 	"github.com/akrck02/valhalla-core/database/dal"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/google/uuid"
 )
 
 func TestUserCrud(t *testing.T) {
-
-	databaseUuid := uuid.NewString()
-	db, err := NewTestDatabase(databaseUuid)
+	databaseUUID := uuid.NewString()
+	db, err := NewTestDatabase(databaseUUID)
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
-	defer RemoveDatabase(databaseUuid)
+	defer RemoveDatabase(databaseUUID)
 
 	expectedUser := &models.User{
 		Email:    "user@valhalla.org",
@@ -33,132 +32,127 @@ func TestUserCrud(t *testing.T) {
 
 	t.Run("Update user profile picture validation errors", func(t *testing.T) { updateUserProfilePictureValidations(t, db) })
 	t.Run("Update user profile", func(t *testing.T) { expectedUser = updateUserProfilePicture(t, db, expectedUser) })
-
 }
 
 func registerValidations(t *testing.T, db *sql.DB) {
-
 	_, err := dal.RegisterUser(nil, nil)
-	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.DatabaseConnectionEmptyMessage)
 
 	_, err = dal.RegisterUser(db, nil)
-	AssertVError(t, err, errors.InvalidRequest, "User cannot be empty.")
+	AssertVError(t, err, verrors.InvalidRequest, verrors.UserEmptyMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{})
-	AssertVError(t, err, errors.InvalidEmail, "Email cannot be empty.")
+	AssertVError(t, err, verrors.InvalidEmail, verrors.EmailEmptyMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "uservalhalla.org"})
-	AssertVError(t, err, errors.InvalidEmail, "mail: missing '@' or angle-addr")
+	AssertVError(t, err, verrors.InvalidEmail, "mail: missing '@' or angle-addr")
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "u@.org"})
-	AssertVError(t, err, errors.InvalidEmail, "mail: missing '@' or angle-addr")
+	AssertVError(t, err, verrors.InvalidEmail, "mail: missing '@' or angle-addr")
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org"})
-	AssertVError(t, err, errors.InvalidPassword, "Password cannot be empty.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordEmptyMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: ""})
-	AssertVError(t, err, errors.InvalidPassword, "Password cannot be empty.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordEmptyMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "abcdefghijklmnñopq"})
-	AssertVError(t, err, errors.InvalidPassword, "Password must contain at least one numeric character.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordNoNumericMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "1bcdefghijklmnñopq"})
-	AssertVError(t, err, errors.InvalidPassword, "Password must contain at least one special character.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordNoSpecialCharacterMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "#1bcdefghijklmnñop"})
-	AssertVError(t, err, errors.InvalidPassword, "Password must contain at least one uppercase character.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordNoUppercaseCharacterMessage)
 
 	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "#1BCDEFGHUJKLMNÑOP"})
-	AssertVError(t, err, errors.InvalidPassword, "Password must contain at least one lowercase character.")
+	AssertVError(t, err, verrors.InvalidPassword, verrors.PasswordNoLowercaseCharacterMessage)
 }
 
 func registerUser(t *testing.T, db *sql.DB, user *models.User) *models.User {
-
-	userId, err := dal.RegisterUser(db, user)
+	userID, err := dal.RegisterUser(db, user)
 	AssertVErrorDoesNotExist(t, err)
 
-	obtainedUser, err := dal.GetUser(db, *userId)
+	obtainedUser, err := dal.GetUser(db, *userID)
 	AssertVErrorDoesNotExist(t, err)
-	Assert(t, nil != obtainedUser && obtainedUser.Email == obtainedUser.Email, "Expected user and obtained user mismatch")
+	Assert(t, nil != obtainedUser && user.Email == obtainedUser.Email, "expected user and obtained user mismatch")
 	return obtainedUser
 }
 
 func getUserValidations(t *testing.T, db *sql.DB) {
 	_, err := dal.GetUser(db, 0)
-	AssertVError(t, err, errors.InvalidId, "User id must be positive.")
+	AssertVError(t, err, verrors.InvalidID, verrors.UserIDNegativeMessage)
 
 	_, err = dal.GetUser(db, 999)
-	AssertVError(t, err, errors.NotFound, "User not found.")
+	AssertVError(t, err, verrors.NotFound, verrors.UserNotFoundMessage)
 }
 
 func updateEmailValidations(t *testing.T, db *sql.DB) {
 	err := dal.UpdateUserEmail(nil, 0, "")
-	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.DatabaseConnectionEmptyMessage)
 
 	err = dal.UpdateUserEmail(db, 0, "")
-	AssertVError(t, err, errors.InvalidId, "User id must be positive.")
+	AssertVError(t, err, verrors.InvalidID, verrors.UserIDNegativeMessage)
 
 	err = dal.UpdateUserEmail(db, 1, "")
-	AssertVError(t, err, errors.InvalidEmail, "Email cannot be empty.")
+	AssertVError(t, err, verrors.InvalidEmail, verrors.EmailEmptyMessage)
 
 	err = dal.UpdateUserEmail(db, 1, "uservalhalla.org")
-	AssertVError(t, err, errors.InvalidEmail, "mail: missing '@' or angle-addr")
+	AssertVError(t, err, verrors.InvalidEmail, "mail: missing '@' or angle-addr")
 
 	err = dal.UpdateUserEmail(db, 1, "u@.org")
-	AssertVError(t, err, errors.InvalidEmail, "mail: missing '@' or angle-addr")
+	AssertVError(t, err, verrors.InvalidEmail, "mail: missing '@' or angle-addr")
 }
 
 func updateUserEmail(t *testing.T, db *sql.DB, user *models.User) *models.User {
-
 	newMail := "user-modified@valhalla.org"
-	userId := user.Id
-	err := dal.UpdateUserEmail(db, userId, newMail)
+	userID := user.ID
+	err := dal.UpdateUserEmail(db, userID, newMail)
 	AssertVErrorDoesNotExist(t, err)
 
-	obtainedUser, err := dal.GetUser(db, userId)
+	obtainedUser, err := dal.GetUser(db, userID)
 	AssertVErrorDoesNotExist(t, err)
 
-	Assert(t, obtainedUser.Email == newMail, "User mail mismatch.")
+	Assert(t, obtainedUser.Email == newMail, "user mail mismatch.")
 	return obtainedUser
 }
 
 func updateUserProfilePictureValidations(t *testing.T, db *sql.DB) {
 	err := dal.UpdateUserProfilePicture(nil, 0, "")
-	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.DatabaseConnectionEmptyMessage)
 
 	err = dal.UpdateUserProfilePicture(db, 0, "")
-	AssertVError(t, err, errors.InvalidId, "User id must be positive.")
+	AssertVError(t, err, verrors.InvalidID, verrors.UserIDNegativeMessage)
 }
 
 func updateUserProfilePicture(t *testing.T, db *sql.DB, user *models.User) *models.User {
-
 	newProfilePic := "my-user-profile-pic.jpg"
-	userId := user.Id
-	err := dal.UpdateUserProfilePicture(db, userId, newProfilePic)
+	userID := user.ID
+	err := dal.UpdateUserProfilePicture(db, userID, newProfilePic)
 	AssertVErrorDoesNotExist(t, err)
 
-	obtainedUser, err := dal.GetUser(db, userId)
+	obtainedUser, err := dal.GetUser(db, userID)
 	AssertVErrorDoesNotExist(t, err)
 
-	Assert(t, obtainedUser.ProfilePicture == newProfilePic, "User mail mismatch.")
+	Assert(t, obtainedUser.ProfilePicture == newProfilePic, "user mail mismatch.")
 	return obtainedUser
 }
 
 func TestUserLogin(t *testing.T) {
-
-	databaseUuid := uuid.NewString()
-	db, err := NewTestDatabase(databaseUuid)
+	databaseUUID := uuid.NewString()
+	db, err := NewTestDatabase(databaseUUID)
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
-	defer RemoveDatabase(databaseUuid)
+	defer RemoveDatabase(databaseUUID)
 
 	expectedUser := &models.User{
 		Email:    "user@valhalla.org",
 		Password: "$P4ssw0rdW3db1128",
 	}
 
-	userId, err := dal.RegisterUser(db, expectedUser)
-	expectedUser.Id = *userId
+	userID, err := dal.RegisterUser(db, expectedUser)
+	AssertVErrorDoesNotExist(t, err)
+	expectedUser.ID = *userID
 
 	t.Run("Login validation errors", func(t *testing.T) { loginValidation(t, db) })
 	t.Run("Login", func(t *testing.T) { login(t, db) })
@@ -168,35 +162,32 @@ func TestUserLogin(t *testing.T) {
 
 	t.Run("Validate user account validation errors", func(t *testing.T) { validateUserAccountValidation(t, db) })
 	t.Run("Validate user account", func(t *testing.T) { validateUserAccount(t, db) })
-
 }
 
 func loginValidation(t *testing.T, db *sql.DB) {
-
 	_, err := dal.Login(nil, "", []string{}, "", "", "", nil)
-	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.DatabaseConnectionEmptyMessage)
 
 	_, err = dal.Login(db, "", []string{}, "", "", "", nil)
-	AssertVError(t, err, errors.UnexpectedError, "Service id cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.ServiceIDEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{}, "", "", "", nil)
-	AssertVError(t, err, errors.UnexpectedError, "Registered domains cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.RegisteredDomainsEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "", "", "", nil)
-	AssertVError(t, err, errors.UnexpectedError, "Secret cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.SecretEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "", "", nil)
-	AssertVError(t, err, errors.InvalidEmail, "Email cannot be empty.")
+	AssertVError(t, err, verrors.InvalidEmail, verrors.EmailEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", nil)
-	AssertVError(t, err, errors.InvalidRequest, "Device cannot be empty.")
+	AssertVError(t, err, verrors.InvalidRequest, verrors.DeviceEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &models.Device{})
-	AssertVError(t, err, errors.InvalidRequest, "Device address cannot be empty.")
+	AssertVError(t, err, verrors.InvalidRequest, verrors.DeviceAddressEmptyMessage)
 
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &models.Device{Address: "127.0.0.1"})
-	AssertVError(t, err, errors.InvalidRequest, "Device user agent cannot be empty.")
-
+	AssertVError(t, err, verrors.InvalidRequest, verrors.DeviceUserAgentEmptyMessage)
 }
 
 func login(t *testing.T, db *sql.DB) {
@@ -216,7 +207,7 @@ func login(t *testing.T, db *sql.DB) {
 
 	device, err := dal.GetDevice(db, 1, "Firefox", "127.0.0.1")
 	AssertVErrorDoesNotExist(t, err)
-	Assert(t, device.Token == *token, "Token mismatch")
+	Assert(t, device.Token == *token, "token mismatch")
 
 	token, err = dal.Login(
 		db,
@@ -234,28 +225,24 @@ func login(t *testing.T, db *sql.DB) {
 
 	device, err = dal.GetDevice(db, 1, "Firefox", "127.0.0.1")
 	AssertVErrorDoesNotExist(t, err)
-	Assert(t, device.Token == *token, "Token mismatch")
-
+	Assert(t, device.Token == *token, "token mismatch")
 }
 
 func loginWithAuthValidation(t *testing.T, db *sql.DB) {
-
 	err := dal.LoginWithAuth(nil, "", "")
-	AssertVError(t, err, errors.UnexpectedError, "Database connection cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.DatabaseConnectionEmptyMessage)
 
 	err = dal.LoginWithAuth(db, "", "")
-	AssertVError(t, err, errors.UnexpectedError, "Secret cannot be empty.")
+	AssertVError(t, err, verrors.UnexpectedError, verrors.SecretEmptyMessage)
 
 	err = dal.LoginWithAuth(db, "secret", "")
-	AssertVError(t, err, errors.InvalidToken, "Token cannot be empty.")
+	AssertVError(t, err, verrors.InvalidToken, verrors.TokenEmptyMessage)
 
 	err = dal.LoginWithAuth(db, "secret", "token")
-	AssertVError(t, err, errors.InvalidToken, "token is malformed: token contains an invalid number of segments")
-
+	AssertVError(t, err, verrors.InvalidToken, "token is malformed: token contains an invalid number of segments")
 }
 
 func loginWithAuth(t *testing.T, db *sql.DB) {
-
 	token, err := dal.Login(
 		db,
 		"valhalla-core",
@@ -274,13 +261,11 @@ func loginWithAuth(t *testing.T, db *sql.DB) {
 	AssertVErrorDoesNotExist(t, err)
 
 	err = dal.LoginWithAuth(db, "secret1", *token)
-	AssertVError(t, err, errors.InvalidToken, "token signature is invalid: signature is invalid")
+	AssertVError(t, err, verrors.InvalidToken, "token signature is invalid: signature is invalid")
 }
 
 func validateUserAccountValidation(t *testing.T, db *sql.DB) {
-
 }
 
 func validateUserAccount(t *testing.T, db *sql.DB) {
-
 }

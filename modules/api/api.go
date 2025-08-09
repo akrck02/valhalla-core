@@ -1,3 +1,4 @@
+// Package api provides the valhalla http endpoints
 package api
 
 import (
@@ -10,27 +11,29 @@ import (
 	"github.com/akrck02/valhalla-core/database/tables"
 	"github.com/akrck02/valhalla-core/modules/api/configuration"
 	"github.com/akrck02/valhalla-core/modules/api/middleware"
-	"github.com/akrck02/valhalla-core/modules/api/models"
+	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 	"github.com/akrck02/valhalla-core/modules/api/services"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
-const API_PATH = "/"
-const CONTENT_TYPE_HEADER = "Content-Type"
-const ENV_FILE_PATH = ".env"
+const (
+	APIPath           = "/"
+	ContentTypeHeader = "Content-Type"
+	EnvFilePath       = ".env"
+)
 
-// ApiMiddlewares is a list of middleware functions that will be applied to all API requests
+// APIMiddleware is a list of middleware functions that will be applied to all API requests
 // this list can be modified to add or remove middlewares
 // the order of the middlewares is important, it will be applied in the order they are listed
-var ApiMiddlewares = []middleware.Middleware{
+var APIMiddleware = []middleware.Middleware{
 	middleware.Security,
 	middleware.Trazability,
+	middleware.Database,
 	middleware.Checks,
 }
 
-func startApi(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
-
+func startAPI(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
 	// show log app title and start router
 	log.Println("-----------------------------------")
 	log.Println(" ", configuration.ApiName, " ")
@@ -39,7 +42,7 @@ func startApi(configuration configuration.APIConfiguration, endpoints []apimodel
 	// Add API path to endpoints
 	newEndpoints := []apimodels.Endpoint{}
 	for _, endpoint := range endpoints {
-		endpoint.Path = API_PATH + configuration.ApiName + "/" + configuration.Version + "/" + endpoint.Path
+		endpoint.Path = APIPath + configuration.ApiName + "/" + configuration.Version + "/" + endpoint.Path
 		newEndpoints = append(newEndpoints, endpoint)
 	}
 
@@ -47,14 +50,12 @@ func startApi(configuration configuration.APIConfiguration, endpoints []apimodel
 	registerEndpoints(newEndpoints)
 
 	// Start listening HTTP requests
-	log.Printf("API started on http://%s:%s%s", configuration.Ip, configuration.Port, API_PATH)
+	log.Printf("API started on http://%s:%s%s", configuration.Ip, configuration.Port, APIPath)
 	state := http.ListenAndServe(configuration.Ip+":"+configuration.Port, nil)
 	log.Print(state.Error())
-
 }
 
 func registerEndpoints(endpoints []apimodels.Endpoint) {
-
 	for _, endpoint := range endpoints {
 
 		switch endpoint.Method {
@@ -76,7 +77,6 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 		setEndpointDefaults(&endpoint)
 
 		http.HandleFunc(endpoint.Path, func(writer http.ResponseWriter, reader *http.Request) {
-
 			// enable CORS
 			writer.Header().Set("Access-Control-Allow-Origin", os.Getenv("CORS_ORIGIN"))
 			writer.Header().Set("Access-Control-Allow-Methods", os.Getenv("CORS_METHODS"))
@@ -111,7 +111,6 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 }
 
 func setEndpointDefaults(endpoint *apimodels.Endpoint) {
-
 	if nil == endpoint.Checks {
 		endpoint.Checks = services.EmptyCheck
 	}
@@ -127,12 +126,10 @@ func setEndpointDefaults(endpoint *apimodels.Endpoint) {
 	if endpoint.ResponseMimeType == "" {
 		endpoint.ResponseMimeType = apimodels.MimeApplicationJson
 	}
-
 }
 
-func applyMiddleware(context *apimodels.ApiContext) *errors.ApiError {
-
-	for _, middleware := range ApiMiddlewares {
+func applyMiddleware(context *apimodels.ApiContext) *verrors.APIError {
+	for _, middleware := range APIMiddleware {
 		err := middleware(context)
 		if nil != err {
 			return err
@@ -143,7 +140,7 @@ func applyMiddleware(context *apimodels.ApiContext) *errors.ApiError {
 }
 
 func Start() {
-	configuration := configuration.LoadConfiguration(ENV_FILE_PATH)
+	configuration := configuration.LoadConfiguration(EnvFilePath)
 
 	db, err := database.Connect("valhalla.db")
 	if nil != err {
@@ -159,5 +156,5 @@ func Start() {
 
 	db.Close()
 
-	startApi(configuration, EndpointRegistry)
+	startAPI(configuration, EndpointRegistry)
 }

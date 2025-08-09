@@ -1,7 +1,7 @@
 package apimodels
 
 import (
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
 type Endpoint struct {
@@ -18,5 +18,7 @@ type Endpoint struct {
 	Database bool `json:"-"`
 }
 
-type EndpointCheck func(context *ApiContext) *errors.ApiError
-type EndpointListener func(context *ApiContext) (*Response, *errors.ApiError)
+type (
+	EndpointCheck    func(context *ApiContext) *verrors.APIError
+	EndpointListener func(context *ApiContext) (*Response, *verrors.APIError)
+)

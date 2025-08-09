@@ -8,8 +8,8 @@ type Project struct {
 }
 
 type ProjectMember struct {
-	UserId      int64               `json:"uid,omitempty"`
-	ProjectId   int64               `json:"pid,omitempty"`
+	UserID      int64               `json:"uid,omitempty"`
+	ProjectID   int64               `json:"pid,omitempty"`
 	Permissions []ProjectPermission `json:"pms,omitempty"`
 }
 
