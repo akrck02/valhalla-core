@@ -4,13 +4,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-const AUTHORITATION_HEADER = "Authorization"
+const AuthorizationHeader = "Authorization"
 
-func Security(context *apimodels.ApiContext) *errors.ApiError {
+func Security(context *apimodels.ApiContext) *verrors.APIError {
 	// Check if endpoint is registered and secured
 	if !context.Trazability.Endpoint.Secured {
 		return nil
@@ -20,10 +20,10 @@ func Security(context *apimodels.ApiContext) *errors.ApiError {
 
 	// Check if token is empty
 	if context.Request.Authorization == "" {
-		return &errors.ApiError{
+		return &verrors.APIError{
 			Status: http.StatusForbidden,
-			VError: errors.VError{
-				Code:    errors.InvalidToken,
+			VError: verrors.VError{
+				Code:    verrors.InvalidToken,
 				Message: "Missing token",
 			},
 		}
@@ -31,10 +31,10 @@ func Security(context *apimodels.ApiContext) *errors.ApiError {
 
 	// Check if token is valid
 	if !tokenIsValid(context.Request.Authorization) {
-		return &errors.ApiError{
+		return &verrors.APIError{
 			Status: http.StatusForbidden,
-			VError: errors.VError{
-				Code:    errors.InvalidToken,
+			VError: verrors.VError{
+				Code:    verrors.InvalidToken,
 				Message: "Invalid token",
 			},
 		}

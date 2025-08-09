@@ -3,12 +3,11 @@ package middleware
 import (
 	"time"
 
-	"github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-func Trazability(context *apimodels.ApiContext) *errors.ApiError {
-
+func Trazability(context *apimodels.ApiContext) *verrors.APIError {
 	time := time.Now().UnixMilli()
 
 	context.Trazability = apimodels.Trazability{

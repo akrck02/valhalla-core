@@ -1,11 +1,16 @@
-package errors
+// Package verrors provides models and functions for better error handling
+package verrors
+
+import (
+	"net/http"
+)
 
 type VError struct {
 	Code    VErrorCode `json:"code,omitempty"`
 	Message string     `json:"message,omitempty"`
 }
 
-type ApiError struct {
+type APIError struct {
 	Status int `json:"status,omitempty"`
 	VError
 }
@@ -31,39 +36,94 @@ func New(code VErrorCode, message string) *VError {
 	}
 }
 
+func NewAPIError(verror *VError) *APIError {
+	var status int
+
+	if 0 <= verror.Code && verror.Code <= 999 {
+		status = http.StatusInternalServerError
+	} else if 1000 <= verror.Code && verror.Code <= 3999 {
+		status = http.StatusBadRequest
+	} else if 4000 <= verror.Code && verror.Code <= 4999 {
+		status = http.StatusNotFound
+	} else if 5000 <= verror.Code && verror.Code <= 5999 {
+		status = http.StatusUnauthorized
+	} else if 6000 <= verror.Code && verror.Code <= 6999 {
+		status = http.StatusForbidden
+	} else {
+		status = http.StatusTeapot
+	}
+
+	return &APIError{
+		Status: status,
+		VError: *verror,
+	}
+}
+
 type VErrorCode int
 
 const (
-	// 0 --> 999 | GENERAL ERRORS
+	// 0 --> 999 | SYSTEM UNEXPECTED ERRORS
 	UnexpectedError            VErrorCode = 0
-	AccessDenied               VErrorCode = 1
+	DatabaseError              VErrorCode = 1
 	NotImplemented             VErrorCode = 2
-	InvalidRequest             VErrorCode = 3
-	DatabaseError              VErrorCode = 4
-	InvalidId                  VErrorCode = 5
-	NotFound                   VErrorCode = 6
-	NotEnoughtPermissions      VErrorCode = 7
-	InvalidToken               VErrorCode = 8
-	InvalidPassword            VErrorCode = 9
-	InvalidEmail               VErrorCode = 10
-	CannotCreateValidationCode VErrorCode = 11
-	InvalidValidationCode      VErrorCode = 12
-	NothingChanged             VErrorCode = 13
+	NothingChanged             VErrorCode = 3
+	CannotGenerateAuthToken    VErrorCode = 4
+	CannotCreateValidationCode VErrorCode = 5
 
-	// 1000 --> 1999 | USER ERRORS
-	UserAlreadyExists    VErrorCode = 1000
-	UserAlreadyValidated VErrorCode = 1001
-	UserNotAuthorized    VErrorCode = 1002
+	// 1000 -> 3999 | VALIDATION ERRORS
+	InvalidRequest        VErrorCode = 1000
+	InvalidID             VErrorCode = 1001
+	InvalidToken          VErrorCode = 1002
+	InvalidPassword       VErrorCode = 1003
+	InvalidEmail          VErrorCode = 1004
+	InvalidValidationCode VErrorCode = 1005
 
-	// 2000 --> 2999 | PROJECT ERRORS
-	ProjectAlreadyExists VErrorCode = 2000
+	// 1100 -> 1299 | USER RELATED VALIDATION ERRORS
+	UserAlreadyExists    VErrorCode = 1100
+	UserAlreadyValidated VErrorCode = 1101
 
-	// 3000 --> 3999 | TEAM ERRORS
-	TeamAlreadyExists   VErrorCode = 3000
-	UserIsAlreadyMember VErrorCode = 3001
-	UserIsNotMember     VErrorCode = 3002
+	// 1300 -> 1499 | PROJECT RELATED VALIDATION ERRORS
+	ProjectAlreadyExists VErrorCode = 1300
 
-	// 4000 --> 4999 | DEVICE ERRORS
-	DeviceNotFound          VErrorCode = 4000
-	CannotGenerateAuthToken VErrorCode = 4001
+	// 4000 -> 4999 | LOOKUP ERRORS
+	NotFound VErrorCode = 4000
+
+	// 5000 -> 5999 | AUTHORITATION ERRORS
+	NotAuthorized VErrorCode = 5000
+
+	// 6000 -> 7999 | PERMISSION ERRORS
+	AccessDenied          VErrorCode = 6000
+	NotEnoughtPermissions VErrorCode = 6001
+)
+
+const (
+	AccessDeniedMessage string = "access denied"
+
+	DatabaseConnectionEmptyMessage string = "database connection cannot be empty"
+	ServiceIDEmptyMessage          string = "service id cannot be empty"
+	RegisteredDomainsEmptyMessage  string = "registered domains cannot be empty"
+	SecretEmptyMessage             string = "secret cannot be empty"
+
+	TokenEmptyMessage   string = "token cannot be empty"
+	TokenInvalidMessage string = "invalid token"
+
+	PasswordEmptyMessage                string = "password cannot be empty"
+	PasswordShortMessage                string = "password is short"
+	PasswordNoNumericMessage            string = "password must contain at least one numeric character"
+	PasswordNoSpecialCharacterMessage   string = "password must contain at least one special character"
+	PasswordNoLowercaseCharacterMessage string = "password must contain at least one uppercase character"
+	PasswordNoUppercaseCharacterMessage string = "password must contain at least one lowercase character"
+
+	EmailEmptyMessage string = "email cannot be empty"
+
+	UserEmptyMessage         string = "user cannot be empty"
+	UserNotFoundMessage      string = "user not found"
+	UserIDNegativeMessage    string = "user id must be positive"
+	UserCannotDeleteMessage  string = "cannot delete user"
+	UserCannotUpdateMessage  string = "cannot update user"
+	UserAlreadyExistsMessage string = "user already exists"
+
+	DeviceEmptyMessage          string = "device cannot be empty"
+	DeviceAddressEmptyMessage   string = "device address cannot be empty"
+	DeviceUserAgentEmptyMessage string = "device user agent cannot be empty"
 )

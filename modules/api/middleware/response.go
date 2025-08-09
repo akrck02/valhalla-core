@@ -5,36 +5,33 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/akrck02/valhalla-core/modules/api/models"
+	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 	"github.com/akrck02/valhalla-core/sdk/logger"
 )
 
-const CONTENT_TYPE_HEADER = "Content-Type"
+const ContentTypeHeader = "Content-Type"
 
-// This struct represents an empty response
+// EmptyResponse struct represents an empty response
 type EmptyResponse struct{}
 
 // Response handle middleware function
 func Response(context *apimodels.ApiContext, writer http.ResponseWriter) {
-
 	switch context.Trazability.Endpoint.ResponseMimeType {
 	case apimodels.MimeApplicationJson:
-		sendJsonCatchingErrors(context, writer)
+		sendJSONHandlingErrors(context, writer)
 	default:
 		sendResponseCatchingErrors(context, writer)
 	}
 }
 
-// Send HTTP response
+// SendResponse sens a HTTP response
 func SendResponse(w http.ResponseWriter, status int, response interface{}, contentType apimodels.MimeType) {
-	w.Header().Set(CONTENT_TYPE_HEADER, string(contentType))
+	w.Header().Set(ContentTypeHeader, string(contentType))
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(response)
 }
 
-// Send json data catching errors
-func sendJsonCatchingErrors(context *apimodels.ApiContext, writer http.ResponseWriter) {
-
+func sendJSONHandlingErrors(context *apimodels.ApiContext, writer http.ResponseWriter) {
 	// calculate the time of the request
 	start := time.Now()
 

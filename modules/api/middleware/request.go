@@ -4,30 +4,30 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-const USER_AGENT_HEADER = "User-Agent"
+const UserAgentHeader = "User-Agent"
 
 // Request handler middleware function
-func Request(r *http.Request, context *apimodels.ApiContext) *errors.ApiError {
+func Request(r *http.Request, context *apimodels.ApiContext) *verrors.APIError {
 	parserError := r.ParseForm()
 
 	if parserError != nil {
-		return &errors.ApiError{
+		return &verrors.APIError{
 			Status: http.StatusBadRequest,
-			VError: errors.VError{
-				Code:    errors.InvalidRequest,
+			VError: verrors.VError{
+				Code:    verrors.InvalidRequest,
 				Message: parserError.Error(),
 			},
 		}
 	}
 
 	context.Request = apimodels.Request{
-		Authorization: r.Header.Get(AUTHORITATION_HEADER),
+		Authorization: r.Header.Get(AuthorizationHeader),
 		Ip:            r.Host,
-		UserAgent:     r.Header.Get(USER_AGENT_HEADER),
+		UserAgent:     r.Header.Get(UserAgentHeader),
 		Headers:       map[string]string{},
 		Body:          r.Body,
 		Params:        map[string]string{},

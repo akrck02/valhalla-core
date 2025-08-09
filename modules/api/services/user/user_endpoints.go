@@ -1,6 +1,6 @@
 package userservice
 
-import "github.com/akrck02/valhalla-core/modules/api/models"
+import apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 
 var UserRegisterEndpoint = apimodels.Endpoint{
 	Path:     "users",
@@ -8,5 +8,5 @@ var UserRegisterEndpoint = apimodels.Endpoint{
 	Listener: Register,
 	Checks:   RegisterCheck,
 	Secured:  false,
-	Database: false,
+	Database: true,
 }

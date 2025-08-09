@@ -1,38 +1,26 @@
+// Package userservice provides functions to handle the api http request related to a user
 package userservice
 
 import (
 	"net/http"
 
-	"github.com/akrck02/valhalla-core/database"
 	"github.com/akrck02/valhalla-core/database/dal"
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/sdk/errors"
+	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
-func Register(context *apimodels.ApiContext) (*apimodels.Response, *errors.ApiError) {
-	db, err := database.Connect("valhalla.db")
-	if nil != err {
-		return nil, &errors.ApiError{
-			Status: http.StatusInternalServerError,
-			VError: errors.VError{
-				Code:    errors.DatabaseError,
-				Message: "Cannot connect to database.",
-			},
-		}
-	}
+func Register(context *apimodels.ApiContext) (*apimodels.Response, *verrors.APIError) {
+	defer context.Database.Close()
 
-	var user models.User = context.Request.Body.(models.User)
-	userId, registerErr := dal.RegisterUser(db, &user)
+	user := context.Request.Body.(models.User)
+	userID, registerErr := dal.RegisterUser(context.Database, &user)
 	if nil != registerErr {
-		return nil, &errors.ApiError{
-			Status: http.StatusInternalServerError,
-			VError: *registerErr,
-		}
+		return nil, verrors.NewAPIError(registerErr)
 	}
 
 	return &apimodels.Response{
 		Code:     http.StatusOK,
-		Response: userId,
+		Response: userID,
 	}, nil
 }
