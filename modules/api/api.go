@@ -84,7 +84,7 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			writer.Header().Set("Access-Control-Max-Age", os.Getenv("CORS_MAX_AGE"))
 
 			// create basic api context
-			context := &apimodels.ApiContext{
+			context := &apimodels.APIContext{
 				Trazability: apimodels.Trazability{
 					Endpoint: endpoint,
 				},
@@ -93,14 +93,14 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			// Get request data
 			err := middleware.Request(reader, context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
 
 			// Apply middleware to the request
 			err = applyMiddleware(context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
 
@@ -120,15 +120,15 @@ func setEndpointDefaults(endpoint *apimodels.Endpoint) {
 	}
 
 	if endpoint.RequestMimeType == "" {
-		endpoint.RequestMimeType = apimodels.MimeApplicationJson
+		endpoint.RequestMimeType = apimodels.MineApplicationJSON
 	}
 
 	if endpoint.ResponseMimeType == "" {
-		endpoint.ResponseMimeType = apimodels.MimeApplicationJson
+		endpoint.ResponseMimeType = apimodels.MineApplicationJSON
 	}
 }
 
-func applyMiddleware(context *apimodels.ApiContext) *verrors.APIError {
+func applyMiddleware(context *apimodels.APIContext) *verrors.APIError {
 	for _, middleware := range APIMiddleware {
 		err := middleware(context)
 		if nil != err {

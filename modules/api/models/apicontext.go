@@ -2,7 +2,7 @@ package apimodels
 
 import "database/sql"
 
-type ApiContext struct {
+type APIContext struct {
 	Trazability Trazability
 	Request     Request
 	Response    Response

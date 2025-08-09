@@ -10,7 +10,7 @@ import (
 
 const AuthorizationHeader = "Authorization"
 
-func Security(context *apimodels.ApiContext) *verrors.APIError {
+func Security(context *apimodels.APIContext) *verrors.APIError {
 	// Check if endpoint is registered and secured
 	if !context.Trazability.Endpoint.Secured {
 		return nil

@@ -6,7 +6,7 @@ import (
 
 type Endpoint struct {
 	Path   string     `json:"path,omitempty"`
-	Method HttpMethod `json:"method,omitempty"`
+	Method HTTPMethod `json:"method,omitempty"`
 
 	RequestMimeType  MimeType `json:"requestMimeType,omitempty"`
 	ResponseMimeType MimeType `json:"responseMimeType,omitempty"`
@@ -19,6 +19,6 @@ type Endpoint struct {
 }
 
 type (
-	EndpointCheck    func(context *ApiContext) *verrors.APIError
-	EndpointListener func(context *ApiContext) (*Response, *verrors.APIError)
+	EndpointCheck    func(context *APIContext) *verrors.APIError
+	EndpointListener func(context *APIContext) (*Response, *verrors.APIError)
 )

@@ -10,7 +10,7 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
-func Register(context *apimodels.ApiContext) (*apimodels.Response, *verrors.APIError) {
+func Register(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
 	defer context.Database.Close()
 
 	user := context.Request.Body.(models.User)

@@ -6,7 +6,7 @@ import (
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-func Database(context *apimodels.ApiContext) *verrors.APIError {
+func Database(context *apimodels.APIContext) *verrors.APIError {
 	if !context.Trazability.Endpoint.Database || nil != context.Database {
 		return nil
 	}

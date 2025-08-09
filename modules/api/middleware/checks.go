@@ -5,7 +5,7 @@ import (
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-func Checks(context *apimodels.ApiContext) *verrors.APIError {
+func Checks(context *apimodels.APIContext) *verrors.APIError {
 	checkError := context.Trazability.Endpoint.Checks(context)
 	if checkError != nil {
 		return checkError

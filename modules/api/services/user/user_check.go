@@ -9,7 +9,7 @@ import (
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
-func RegisterCheck(context *apimodels.ApiContext) *verrors.APIError {
+func RegisterCheck(context *apimodels.APIContext) *verrors.APIError {
 	body := context.Request.Body.(io.ReadCloser)
 	user := models.User{}
 	err := inout.ParseJson(&body, &user)

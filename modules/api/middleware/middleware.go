@@ -6,4 +6,4 @@ import (
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 )
 
-type Middleware func(context *apimodels.ApiContext) *verrors.APIError
+type Middleware func(context *apimodels.APIContext) *verrors.APIError
