@@ -52,6 +52,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	statement, err := db.Prepare(
 		"INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)",
 	)
+
 	if nil != err {
 		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
@@ -64,6 +65,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 		uuid.NewString(),
 		time.Now(),
 	)
+
 	if nil != err {
 		return nil, verrors.New(verrors.DatabaseError, err.Error())
 	}
