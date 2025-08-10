@@ -79,8 +79,9 @@ const (
 	InvalidValidationCode VErrorCode = 1005
 
 	// 1100 -> 1299 | USER RELATED VALIDATION ERRORS
-	UserAlreadyExists    VErrorCode = 1100
-	UserAlreadyValidated VErrorCode = 1101
+	UserAlreadyExists            VErrorCode = 1100
+	UserAlreadyValidated         VErrorCode = 1101
+	UserProfilePictureIsTooLarge VErrorCode = 1102
 
 	// 1300 -> 1499 | PROJECT RELATED VALIDATION ERRORS
 	ProjectAlreadyExists VErrorCode = 1300
@@ -116,12 +117,13 @@ const (
 
 	EmailEmptyMessage string = "email cannot be empty"
 
-	UserEmptyMessage         string = "user cannot be empty"
-	UserNotFoundMessage      string = "user not found"
-	UserIDNegativeMessage    string = "user id must be positive"
-	UserCannotDeleteMessage  string = "cannot delete user"
-	UserCannotUpdateMessage  string = "cannot update user"
-	UserAlreadyExistsMessage string = "user already exists"
+	UserEmptyMessage                     string = "user cannot be empty"
+	UserNotFoundMessage                  string = "user not found"
+	UserIDNegativeMessage                string = "user id must be positive"
+	UserCannotDeleteMessage              string = "cannot delete user"
+	UserCannotUpdateMessage              string = "cannot update user"
+	UserAlreadyExistsMessage             string = "user already exists"
+	UserProfilePictureIsTooLargeMessager string = "profile picture is too long; the maximum size is 3MB."
 
 	DeviceEmptyMessage          string = "device cannot be empty"
 	DeviceAddressEmptyMessage   string = "device address cannot be empty"

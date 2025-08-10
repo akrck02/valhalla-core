@@ -1,0 +1,28 @@
+meta {
+  name: Update project
+  type: http
+  seq: 3
+}
+
+patch {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.projects.endpoint}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{valhalla.user.token}}
+}
+
+body:json {
+  {
+      "ID" : "669ad7735f32eb282160a898",
+      "name" : "Test project modified at {{timestamp}}",
+      "description" : "Project with a description modified here at {{timestamp}}",
+      "owner" : "{{valhalla.user.id}}"
+  }
+}
+
+vars:pre-request {
+  timestamp: new Date()
+}

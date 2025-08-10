@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"mime/multipart"
 	"net/http"
 	"regexp"
 
@@ -31,11 +32,19 @@ func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
 		Headers:       map[string]string{},
 		Body:          r.Body,
 		Params:        map[string]string{},
+		Files:         map[string][]*multipart.FileHeader{},
 	}
 
-	// If files are present, add them to the context
-	if r.MultipartForm != nil {
-		context.Request.Files = r.MultipartForm.File
+	// Add files
+	if context.Trazability.Endpoint.IsMultipartForm {
+		err := r.ParseMultipartForm(32 << 20)
+		if nil != err {
+			return verrors.NewAPIError(verrors.New(verrors.InvalidRequest, err.Error()))
+		}
+
+		if r.MultipartForm != nil {
+			context.Request.Files = r.MultipartForm.File
+		}
 	}
 
 	// Add headers to the context

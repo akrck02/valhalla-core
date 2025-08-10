@@ -1,0 +1,26 @@
+meta {
+  name: GetByEmail
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/email?email=user@valhalla.org
+  body: none
+  auth: inherit
+}
+
+params:query {
+  email: user@valhalla.org
+}
+
+body:xml {
+  {
+    "em" : "akrck02@gmail.com",
+    "ps" : "#A28nbnsbfnd2738!!$%&9@#13"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

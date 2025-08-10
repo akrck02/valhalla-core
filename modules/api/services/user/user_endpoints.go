@@ -20,7 +20,7 @@ var UserGetEndpoint = apimodels.Endpoint{
 }
 
 var UserGetByEmailEndpoint = apimodels.Endpoint{
-	Path:     "users/email/{email}",
+	Path:     "users/email",
 	Method:   apimodels.GetMethod,
 	Listener: GetByEmail,
 	// Checks:   RegisterCheck,
@@ -28,7 +28,7 @@ var UserGetByEmailEndpoint = apimodels.Endpoint{
 }
 
 var UserUpdatePasswordEndpoint = apimodels.Endpoint{
-	Path:     "users/password",
+	Path:     "users/{id}/password",
 	Method:   apimodels.PatchMethod,
 	Listener: UpdatePassword,
 	// Checks:   RegisterCheck,
@@ -36,15 +36,16 @@ var UserUpdatePasswordEndpoint = apimodels.Endpoint{
 }
 
 var UserUpdateProfilePicEndpoint = apimodels.Endpoint{
-	Path:     "users/profile/picture",
+	Path:     "users/{id}/profile/picture",
 	Method:   apimodels.PatchMethod,
 	Listener: UpdateProfilePicture,
 	// Checks:   RegisterCheck,
-	Secured: true,
+	IsMultipartForm: true,
+	Secured:         true,
 }
 
 var UserUpdateEmailEndpoint = apimodels.Endpoint{
-	Path:     "users/email/{email}",
+	Path:     "users/{id}/email",
 	Method:   apimodels.PatchMethod,
 	Listener: UpdateEmail,
 	// Checks:   RegisterCheck,

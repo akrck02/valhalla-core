@@ -1,0 +1,15 @@
+meta {
+  name: Create project
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.projects.endpoint}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{valhalla.user.token}}
+}

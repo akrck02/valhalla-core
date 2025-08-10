@@ -14,8 +14,9 @@ type Endpoint struct {
 	Listener EndpointListener `json:"-"`
 	Checks   EndpointCheck    `json:"-"`
 
-	Secured  bool `json:"secured,omitempty"`
-	Database bool `json:"-"`
+	IsMultipartForm bool `json:"containsFiles,omitempty"`
+	Secured         bool `json:"secured,omitempty"`
+	Database        bool `json:"-"`
 }
 
 type (

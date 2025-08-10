@@ -12,7 +12,7 @@ import (
 func RegisterCheck(context *apimodels.APIContext) *verrors.APIError {
 	body := context.Request.Body.(io.ReadCloser)
 	user := models.User{}
-	err := inout.ParseJson(&body, &user)
+	err := inout.ParseJSON(&body, &user)
 	if nil != err {
 		return verrors.NewAPIError(verrors.New(verrors.InvalidRequest, "Request body has invalid format."))
 	}

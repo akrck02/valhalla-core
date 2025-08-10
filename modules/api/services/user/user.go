@@ -71,17 +71,51 @@ func GetByEmail(context *apimodels.APIContext) (*apimodels.Response, *verrors.AP
 func UpdatePassword(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
 	defer context.Database.Close()
 
+	id := context.Request.Params["id"]
+	_, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequest, err.Error()))
+	}
+
 	return nil, nil
 }
 
 func UpdateProfilePicture(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
+	defer context.Database.Close()
+
+	id := context.Request.Params["id"]
+	userID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequest, err.Error()))
+	}
+
+	file := context.Request.Files["profile_picture"][0]
+	println(file.Filename)
+	println(file.Size)
+	println()
+	if file.Size > 3145728 {
+		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequest, "The profile picture is too long; the maximum size is 3MB."))
+	}
+
+	file.Open()
+
+	// Save the profile picture
+	UpdateErr := dal.UpdateUserProfilePicture(context.Database, userID, "")
+	if nil != UpdateErr {
+		return nil, verrors.NewAPIError(UpdateErr)
+	}
+
 	return nil, nil
 }
 
 func UpdateEmail(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
+	defer context.Database.Close()
+
 	return nil, nil
 }
 
 func Login(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
+	defer context.Database.Close()
+
 	return nil, nil
 }
