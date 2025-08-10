@@ -4,6 +4,7 @@ package controllers
 import (
 	"io"
 	"net/http"
+	"path"
 
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
@@ -122,22 +123,27 @@ func UpdateProfilePicture(context *apimodels.APIContext) (*apimodels.Response, *
 
 	id, err := context.Request.GetParamInt64("id")
 	if err != nil {
-		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
+		return nil, verrors.NewAPIError(verrors.InvalidRequest(err.Error()))
 	}
 
 	fileh, ferr := context.Request.GetFile("profile_picture", 3145728)
 	if nil != ferr {
-		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, ferr.Error()))
+		return nil, verrors.NewAPIError(verrors.InvalidRequest(ferr.Error()))
 	}
 
-	data, err := fileh.Open()
+	file, err := fileh.Open()
 	if nil != err {
-		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
+		return nil, verrors.NewAPIError(verrors.InvalidRequest(err.Error()))
 	}
-	defer data.Close()
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if nil != err {
+		return nil, verrors.NewAPIError(verrors.InvalidRequest(err.Error()))
+	}
 
 	// Save the profile picture
-	uerr := services.UpdateUserProfilePicture(context.Database, *id)
+	uerr := services.UpdateUserProfilePicture(context.Database, *id, &data, path.Ext(fileh.Filename))
 	if nil != uerr {
 		return nil, verrors.NewAPIError(uerr)
 	}

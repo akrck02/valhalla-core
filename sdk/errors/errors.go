@@ -50,6 +50,13 @@ func AccessDenied(message string) *VError {
 	}
 }
 
+func Unauthorized(message string) *VError {
+	return &VError{
+		Code:    UnauthorizedErrorCode,
+		Message: message,
+	}
+}
+
 func InvalidRequest(message string) *VError {
 	return &VError{
 		Code:    InvalidRequestErrorCode,
@@ -112,7 +119,7 @@ const (
 	NotFoundErrorCode VErrorCode = 4000
 
 	// 5000 -> 5999 | AUTHORITATION ERRORS
-	NotAuthorizedErrorCode VErrorCode = 5000
+	UnauthorizedErrorCode VErrorCode = 5000
 
 	// 6000 -> 7999 | PERMISSION ERRORS
 	AccessDeniedErrorCode          VErrorCode = 6000
@@ -122,6 +129,7 @@ const (
 const (
 	AccessDeniedMessage string = "access denied"
 
+	CannotConnectToDatabaseMessage string = "cannot connect to database"
 	DatabaseConnectionEmptyMessage string = "database connection cannot be empty"
 	ServiceIDEmptyMessage          string = "service id cannot be empty"
 	RegisteredDomainsEmptyMessage  string = "registered domains cannot be empty"

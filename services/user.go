@@ -3,6 +3,7 @@ package services
 import (
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/akrck02/valhalla-core/database/dal"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
@@ -50,18 +51,31 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
 	return user, nil
 }
 
-func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte) *verrors.VError {
+func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension string) *verrors.VError {
 
 	if nil == data {
 		return verrors.InvalidRequest(verrors.UserProfilePictureEmptyMessage)
 	}
 
-	_, uerr := dal.GetUser(db, userID)
+	usr, uerr := dal.GetUser(db, userID)
 	if nil != uerr {
 		return uerr
 	}
 
-	fileName := fmt.Sprintf("%d.png", userID)
+	basePath := fmt.Sprintf("data/%s", usr.Database)
+	_, err := os.Stat(basePath)
+	if nil != err {
+		if !os.IsNotExist(err) {
+			return verrors.InvalidRequest(err.Error())
+		}
+
+		err = os.MkdirAll(basePath, 0775)
+		if nil != err {
+			return verrors.InvalidRequest(err.Error())
+		}
+	}
+
+	fileName := fmt.Sprintf("%s/profile_pic%s", basePath, extension)
 	ferr := inout.SaveImage(fileName, data)
 	if nil != ferr {
 		return verrors.Unexpected(ferr.Error())

@@ -20,19 +20,13 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 	if context.Request.Authorization == "" {
 		return &verrors.APIError{
 			Status: http.StatusForbidden,
-			VError: verrors.VError{
-				Code:    verrors.InvalidTokenErrorCode,
-				Message: "Missing token",
-			},
+			VError: *verrors.Unauthorized(verrors.TokenEmptyMessage),
 		}
 	}
 
 	db, err := database.Connect("valhalla.db")
 	if nil != err {
-		return verrors.NewAPIError(&verrors.VError{
-			Code:    verrors.DatabaseErrorCode,
-			Message: "Cannot connect to database.",
-		})
+		return verrors.NewAPIError(verrors.DatabaseError(verrors.CannotConnectToDatabaseMessage))
 	}
 
 	context.Database = db
@@ -41,10 +35,7 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 	if !tokenIsValid(context.Request.Authorization) {
 		return &verrors.APIError{
 			Status: http.StatusForbidden,
-			VError: verrors.VError{
-				Code:    verrors.InvalidTokenErrorCode,
-				Message: "Invalid token",
-			},
+			VError: *verrors.Unauthorized(verrors.TokenInvalidMessage),
 		}
 	}
 
