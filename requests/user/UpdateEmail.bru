@@ -1,0 +1,19 @@
+meta {
+  name: UpdateEmail
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/1/email?email=user@valhalla.org
+  body: none
+  auth: inherit
+}
+
+params:query {
+  email: user@valhalla.org
+}
+
+settings {
+  encodeUrl: true
+}

@@ -11,21 +11,21 @@ import (
 func CreateDevice(db *sql.DB, userID int64, device *models.Device) *verrors.VError {
 	statement, err := db.Prepare("INSERT INTO device(user_id, user_agent, address, token, insert_date, update_date) values(?,?,?,?,?,?)")
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	res, err := statement.Exec(userID, device.UserAgent, device.Address, device.Token, time.Now(), time.Now())
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	if 0 >= affectedRows {
-		return verrors.New(verrors.NothingChanged, "Device was not created.")
+		return verrors.New(verrors.NothingChangedErrorCode, "Device was not created.")
 	}
 
 	return nil
@@ -34,17 +34,17 @@ func CreateDevice(db *sql.DB, userID int64, device *models.Device) *verrors.VErr
 func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*models.Device, *verrors.VError) {
 	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ? AND user_agent = ? AND address = ?")
 	if nil != err {
-		return nil, verrors.New(verrors.DatabaseError, err.Error())
+		return nil, verrors.DatabaseError(err.Error())
 	}
 
 	rows, err := statement.Query(userID, userAgent, address)
 	if nil != err {
-		return nil, verrors.New(verrors.DatabaseError, err.Error())
+		return nil, verrors.DatabaseError(err.Error())
 	}
 	defer rows.Close()
 
 	if !rows.Next() {
-		return nil, verrors.New(verrors.NotFound, "Device not found.")
+		return nil, verrors.NotFound("Device not found.")
 	}
 
 	var obtainedUserAgent string
@@ -66,21 +66,21 @@ func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*mod
 func UpdateDeviceToken(db *sql.DB, userID int64, userAgent string, address string, token string) *verrors.VError {
 	statement, err := db.Prepare("UPDATE device SET token = ? WHERE user_id = ? AND user_agent = ? AND address = ?")
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	res, err := statement.Exec(token, userID, userAgent, address)
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	if 0 >= affectedRows {
-		return verrors.New(verrors.NotFound, "Device does not exist.")
+		return verrors.NotFound("Device does not exist.")
 	}
 
 	return nil
@@ -89,21 +89,21 @@ func UpdateDeviceToken(db *sql.DB, userID int64, userAgent string, address strin
 func DeleteDevice(db *sql.DB, userID int64, userAgent string, address string) *verrors.VError {
 	statement, err := db.Prepare("DELETE FROM device WHERE user_id = ? AND user_agent = ? AND address = ?")
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	res, err := statement.Exec(userID, userAgent, address)
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	affectedRows, err := res.RowsAffected()
 	if nil != err {
-		return verrors.New(verrors.DatabaseError, err.Error())
+		return verrors.DatabaseError(err.Error())
 	}
 
 	if 0 >= affectedRows {
-		return verrors.New(verrors.NotFound, "Device does not exist.")
+		return verrors.NotFound("Device does not exist.")
 	}
 
 	return nil

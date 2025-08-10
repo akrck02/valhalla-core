@@ -6,13 +6,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/akrck02/valhalla-core/database"
 	"github.com/akrck02/valhalla-core/database/tables"
 	"github.com/akrck02/valhalla-core/modules/api/configuration"
+	"github.com/akrck02/valhalla-core/modules/api/controllers"
 	"github.com/akrck02/valhalla-core/modules/api/middleware"
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/modules/api/services"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/logger"
 )
@@ -30,7 +31,6 @@ var APIMiddleware = []middleware.Middleware{
 	middleware.Security,
 	middleware.Trazability,
 	middleware.Database,
-	middleware.Checks,
 }
 
 func startAPI(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
@@ -83,8 +83,11 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			writer.Header().Set("Access-Control-Allow-Headers", os.Getenv("CORS_HEADERS"))
 			writer.Header().Set("Access-Control-Max-Age", os.Getenv("CORS_MAX_AGE"))
 
+			// calculate the time of the request
+			start := time.Now()
+
 			// create basic api context
-			context := &apimodels.ApiContext{
+			context := &apimodels.APIContext{
 				Trazability: apimodels.Trazability{
 					Endpoint: endpoint,
 				},
@@ -93,14 +96,30 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 			// Get request data
 			err := middleware.Request(reader, context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
+				logger.Error(
+					context.Trazability.Endpoint.Path,
+					time.Since(start).Microseconds(),
+					"μs -",
+					fmt.Sprintf("[%d]", err.Status),
+					err.Message,
+				)
+
+				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
 
 			// Apply middleware to the request
 			err = applyMiddleware(context)
 			if nil != err {
-				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJson)
+				logger.Error(
+					context.Trazability.Endpoint.Path,
+					time.Since(start).Microseconds(),
+					"μs -",
+					fmt.Sprintf("[%d]", err.Status),
+					err.Message,
+				)
+
+				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
 				return
 			}
 
@@ -111,24 +130,21 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 }
 
 func setEndpointDefaults(endpoint *apimodels.Endpoint) {
-	if nil == endpoint.Checks {
-		endpoint.Checks = services.EmptyCheck
-	}
 
 	if nil == endpoint.Listener {
-		endpoint.Listener = services.NotImplemented
+		endpoint.Listener = controllers.NotImplemented
 	}
 
 	if endpoint.RequestMimeType == "" {
-		endpoint.RequestMimeType = apimodels.MimeApplicationJson
+		endpoint.RequestMimeType = apimodels.MineApplicationJSON
 	}
 
 	if endpoint.ResponseMimeType == "" {
-		endpoint.ResponseMimeType = apimodels.MimeApplicationJson
+		endpoint.ResponseMimeType = apimodels.MineApplicationJSON
 	}
 }
 
-func applyMiddleware(context *apimodels.ApiContext) *verrors.APIError {
+func applyMiddleware(context *apimodels.APIContext) *verrors.APIError {
 	for _, middleware := range APIMiddleware {
 		err := middleware(context)
 		if nil != err {

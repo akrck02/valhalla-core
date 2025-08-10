@@ -2,3 +2,4 @@ valhalla.db
 valhalla-test.db
 .env
 temp
+data

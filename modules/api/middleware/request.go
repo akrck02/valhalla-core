@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"mime/multipart"
 	"net/http"
 	"regexp"
 
@@ -11,14 +12,14 @@ import (
 const UserAgentHeader = "User-Agent"
 
 // Request handler middleware function
-func Request(r *http.Request, context *apimodels.ApiContext) *verrors.APIError {
+func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
 	parserError := r.ParseForm()
 
 	if parserError != nil {
 		return &verrors.APIError{
 			Status: http.StatusBadRequest,
 			VError: verrors.VError{
-				Code:    verrors.InvalidRequest,
+				Code:    verrors.InvalidRequestErrorCode,
 				Message: parserError.Error(),
 			},
 		}
@@ -26,16 +27,24 @@ func Request(r *http.Request, context *apimodels.ApiContext) *verrors.APIError {
 
 	context.Request = apimodels.Request{
 		Authorization: r.Header.Get(AuthorizationHeader),
-		Ip:            r.Host,
+		IP:            r.Host,
 		UserAgent:     r.Header.Get(UserAgentHeader),
 		Headers:       map[string]string{},
 		Body:          r.Body,
 		Params:        map[string]string{},
+		Files:         map[string][]*multipart.FileHeader{},
 	}
 
-	// If files are present, add them to the context
-	if r.MultipartForm != nil {
-		context.Request.Files = r.MultipartForm.File
+	// Add files
+	if context.Trazability.Endpoint.IsMultipartForm {
+		err := r.ParseMultipartForm(32 << 20)
+		if nil != err {
+			return verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
+		}
+
+		if r.MultipartForm != nil {
+			context.Request.Files = r.MultipartForm.File
+		}
 	}
 
 	// Add headers to the context

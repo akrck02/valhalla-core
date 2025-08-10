@@ -10,17 +10,17 @@ func Log(msgs ...any) {
 }
 
 func Success(msgs ...any) {
-	Log(append([]any{" ✅ |"}, msgs...)...)
+	Log(append([]any{" ✔  |"}, msgs...)...)
 }
 
 func Error(msgs ...any) {
-	Log(append([]any{" ❌ | Error:"}, msgs...)...)
+	Log(append([]any{" 🗙  |"}, msgs...)...)
 }
 
 func Errorf(err error) {
-	Log(append([]any{" ❌ | Error:"}, err.Error())...)
+	Log(append([]any{" 🗙  |"}, err.Error())...)
 }
 
 func Warning(msgs ...any) {
-	Log(append([]any{" ⚠️  | Warning:"}, msgs...)...)
+	Log(append([]any{" ⚠   |"}, msgs...)...)
 }

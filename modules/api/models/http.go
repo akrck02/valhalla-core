@@ -1,9 +1,9 @@
 package apimodels
 
-type HttpMethod int
+type HTTPMethod int
 
 const (
-	GetMethod HttpMethod = iota
+	GetMethod HTTPMethod = iota
 	PostMethod
 	PutMethod
 	DeleteMethod
@@ -13,28 +13,28 @@ const (
 	TraceMethod
 )
 
-type HttpHeaders string
+type HTTPHeaders string
 
 const (
-	HeaderContentType             HttpHeaders = "Content-Type"
-	HeaderAccept                  HttpHeaders = "Accept"
-	HeaderAuthorization           HttpHeaders = "Authorization"
-	HeaderUserAgent               HttpHeaders = "User-Agent"
-	HeaderContentLength           HttpHeaders = "Content-Length"
-	HeaderContentEncoding         HttpHeaders = "Content-Encoding"
-	HeaderContentDisposition      HttpHeaders = "Content-Disposition"
-	HeaderContentTransferEncoding HttpHeaders = "Content-Transfer-Encoding"
-	HeaderContentLanguage         HttpHeaders = "Content-Language"
+	HeaderContentType             HTTPHeaders = "Content-Type"
+	HeaderAccept                  HTTPHeaders = "Accept"
+	HeaderAuthorization           HTTPHeaders = "Authorization"
+	HeaderUserAgent               HTTPHeaders = "User-Agent"
+	HeaderContentLength           HTTPHeaders = "Content-Length"
+	HeaderContentEncoding         HTTPHeaders = "Content-Encoding"
+	HeaderContentDisposition      HTTPHeaders = "Content-Disposition"
+	HeaderContentTransferEncoding HTTPHeaders = "Content-Transfer-Encoding"
+	HeaderContentLanguage         HTTPHeaders = "Content-Language"
 )
 
 type MimeType string
 
 const (
-	MimeApplicationJson        MimeType = "application/json"
-	MimeApplicationXml         MimeType = "application/xml"
+	MineApplicationJSON        MimeType = "application/json"
+	MimeApplicationXML         MimeType = "application/xml"
 	MimeApplicationYaml        MimeType = "application/yaml"
 	MimeApplicationForm        MimeType = "application/x-www-form-urlencoded"
 	MimeApplicationOctetStream MimeType = "application/octet-stream"
 	MimeTextPlain              MimeType = "text/plain"
-	MimeTextHtml               MimeType = "text/html"
+	MimeTextHTML               MimeType = "text/html"
 )

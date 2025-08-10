@@ -5,8 +5,7 @@ import (
 	"io"
 )
 
-func ParseJson[T interface{}](body *io.ReadCloser, object *T) error {
-
+func ParseJSON[T any](body *io.ReadCloser, object *T) error {
 	err := json.NewDecoder(*body).Decode(object)
 	if nil != err {
 		return err
