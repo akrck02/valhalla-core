@@ -14,7 +14,7 @@ func Database(context *apimodels.APIContext) *verrors.APIError {
 	db, err := database.Connect("valhalla.db")
 	if nil != err {
 		return verrors.NewAPIError(&verrors.VError{
-			Code:    verrors.DatabaseError,
+			Code:    verrors.DatabaseErrorCode,
 			Message: "Cannot connect to database.",
 		})
 	}

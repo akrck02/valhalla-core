@@ -11,9 +11,9 @@ import (
 	"github.com/akrck02/valhalla-core/database"
 	"github.com/akrck02/valhalla-core/database/tables"
 	"github.com/akrck02/valhalla-core/modules/api/configuration"
+	"github.com/akrck02/valhalla-core/modules/api/controllers"
 	"github.com/akrck02/valhalla-core/modules/api/middleware"
 	apimodels "github.com/akrck02/valhalla-core/modules/api/models"
-	"github.com/akrck02/valhalla-core/modules/api/services"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/logger"
 )
@@ -31,7 +31,6 @@ var APIMiddleware = []middleware.Middleware{
 	middleware.Security,
 	middleware.Trazability,
 	middleware.Database,
-	middleware.Checks,
 }
 
 func startAPI(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
@@ -131,12 +130,9 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 }
 
 func setEndpointDefaults(endpoint *apimodels.Endpoint) {
-	if nil == endpoint.Checks {
-		endpoint.Checks = services.EmptyCheck
-	}
 
 	if nil == endpoint.Listener {
-		endpoint.Listener = services.NotImplemented
+		endpoint.Listener = controllers.NotImplemented
 	}
 
 	if endpoint.RequestMimeType == "" {

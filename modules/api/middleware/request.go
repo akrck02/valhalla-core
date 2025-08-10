@@ -19,7 +19,7 @@ func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
 		return &verrors.APIError{
 			Status: http.StatusBadRequest,
 			VError: verrors.VError{
-				Code:    verrors.InvalidRequest,
+				Code:    verrors.InvalidRequestErrorCode,
 				Message: parserError.Error(),
 			},
 		}
@@ -27,7 +27,7 @@ func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
 
 	context.Request = apimodels.Request{
 		Authorization: r.Header.Get(AuthorizationHeader),
-		Ip:            r.Host,
+		IP:            r.Host,
 		UserAgent:     r.Header.Get(UserAgentHeader),
 		Headers:       map[string]string{},
 		Body:          r.Body,
@@ -39,7 +39,7 @@ func Request(r *http.Request, context *apimodels.APIContext) *verrors.APIError {
 	if context.Trazability.Endpoint.IsMultipartForm {
 		err := r.ParseMultipartForm(32 << 20)
 		if nil != err {
-			return verrors.NewAPIError(verrors.New(verrors.InvalidRequest, err.Error()))
+			return verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
 		}
 
 		if r.MultipartForm != nil {

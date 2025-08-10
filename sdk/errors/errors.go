@@ -17,14 +17,42 @@ type APIError struct {
 
 func TODO() VError {
 	return VError{
-		Code:    NotImplemented,
+		Code:    NotImplementedErrorCode,
 		Message: "Not yet implemented",
 	}
 }
 
 func Unexpected(message string) *VError {
 	return &VError{
-		Code:    UnexpectedError,
+		Code:    UnexpectedErrorCode,
+		Message: message,
+	}
+}
+
+func DatabaseError(message string) *VError {
+	return &VError{
+		Code:    InvalidRequestErrorCode,
+		Message: message,
+	}
+}
+
+func NotFound(message string) *VError {
+	return &VError{
+		Code:    NotFoundErrorCode,
+		Message: message,
+	}
+}
+
+func AccessDenied(message string) *VError {
+	return &VError{
+		Code:    AccessDeniedErrorCode,
+		Message: message,
+	}
+}
+
+func InvalidRequest(message string) *VError {
+	return &VError{
+		Code:    InvalidRequestErrorCode,
 		Message: message,
 	}
 }
@@ -63,38 +91,32 @@ type VErrorCode int
 
 const (
 	// 0 --> 999 | SYSTEM UNEXPECTED ERRORS
-	UnexpectedError            VErrorCode = 0
-	DatabaseError              VErrorCode = 1
-	NotImplemented             VErrorCode = 2
-	NothingChanged             VErrorCode = 3
-	CannotGenerateAuthToken    VErrorCode = 4
-	CannotCreateValidationCode VErrorCode = 5
+	UnexpectedErrorCode                 VErrorCode = 0
+	DatabaseErrorCode                   VErrorCode = 1
+	NotImplementedErrorCode             VErrorCode = 2
+	NothingChangedErrorCode             VErrorCode = 3
+	CannotGenerateAuthTokenErrorCode    VErrorCode = 4
+	CannotCreateValidationCodeErrorCode VErrorCode = 5
 
 	// 1000 -> 3999 | VALIDATION ERRORS
-	InvalidRequest        VErrorCode = 1000
-	InvalidID             VErrorCode = 1001
-	InvalidToken          VErrorCode = 1002
-	InvalidPassword       VErrorCode = 1003
-	InvalidEmail          VErrorCode = 1004
-	InvalidValidationCode VErrorCode = 1005
+	InvalidRequestErrorCode VErrorCode = 1000
 
 	// 1100 -> 1299 | USER RELATED VALIDATION ERRORS
-	UserAlreadyExists            VErrorCode = 1100
-	UserAlreadyValidated         VErrorCode = 1101
-	UserProfilePictureIsTooLarge VErrorCode = 1102
+	UserAlreadyExistsErrorCode    VErrorCode = 1100
+	UserAlreadyValidatedErrorCode VErrorCode = 1101
 
 	// 1300 -> 1499 | PROJECT RELATED VALIDATION ERRORS
-	ProjectAlreadyExists VErrorCode = 1300
+	ProjectAlreadyExistsErrorCode VErrorCode = 1300
 
 	// 4000 -> 4999 | LOOKUP ERRORS
-	NotFound VErrorCode = 4000
+	NotFoundErrorCode VErrorCode = 4000
 
 	// 5000 -> 5999 | AUTHORITATION ERRORS
-	NotAuthorized VErrorCode = 5000
+	NotAuthorizedErrorCode VErrorCode = 5000
 
 	// 6000 -> 7999 | PERMISSION ERRORS
-	AccessDenied          VErrorCode = 6000
-	NotEnoughtPermissions VErrorCode = 6001
+	AccessDeniedErrorCode          VErrorCode = 6000
+	NotEnoughtPermissionsErrorCode VErrorCode = 6001
 )
 
 const (
@@ -108,6 +130,8 @@ const (
 	TokenEmptyMessage   string = "token cannot be empty"
 	TokenInvalidMessage string = "invalid token"
 
+	FileTooLargeMessage string = "%s is too long; the maximum size is %dMB"
+
 	PasswordEmptyMessage                string = "password cannot be empty"
 	PasswordShortMessage                string = "password is short"
 	PasswordNoNumericMessage            string = "password must contain at least one numeric character"
@@ -117,13 +141,13 @@ const (
 
 	EmailEmptyMessage string = "email cannot be empty"
 
-	UserEmptyMessage                     string = "user cannot be empty"
-	UserNotFoundMessage                  string = "user not found"
-	UserIDNegativeMessage                string = "user id must be positive"
-	UserCannotDeleteMessage              string = "cannot delete user"
-	UserCannotUpdateMessage              string = "cannot update user"
-	UserAlreadyExistsMessage             string = "user already exists"
-	UserProfilePictureIsTooLargeMessager string = "profile picture is too long; the maximum size is 3MB."
+	UserEmptyMessage               string = "user cannot be empty"
+	UserNotFoundMessage            string = "user not found"
+	UserIDNegativeMessage          string = "user id must be positive"
+	UserCannotDeleteMessage        string = "cannot delete user"
+	UserCannotUpdateMessage        string = "cannot update user"
+	UserAlreadyExistsMessage       string = "user already exists"
+	UserProfilePictureEmptyMessage string = "no profile picture provided"
 
 	DeviceEmptyMessage          string = "device cannot be empty"
 	DeviceAddressEmptyMessage   string = "device address cannot be empty"

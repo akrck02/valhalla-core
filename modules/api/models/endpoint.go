@@ -12,14 +12,10 @@ type Endpoint struct {
 	ResponseMimeType MimeType `json:"responseMimeType,omitempty"`
 
 	Listener EndpointListener `json:"-"`
-	Checks   EndpointCheck    `json:"-"`
 
 	IsMultipartForm bool `json:"containsFiles,omitempty"`
 	Secured         bool `json:"secured,omitempty"`
 	Database        bool `json:"-"`
 }
 
-type (
-	EndpointCheck    func(context *APIContext) *verrors.APIError
-	EndpointListener func(context *APIContext) (*Response, *verrors.APIError)
-)
+type EndpointListener func(context *APIContext) (*Response, *verrors.APIError)

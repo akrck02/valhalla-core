@@ -1,5 +1,5 @@
-// Package services provides functions to handle http requests in the api
-package services
+// Package controllers provides functions to handle http requests in the api
+package controllers
 
 import (
 	"net/http"

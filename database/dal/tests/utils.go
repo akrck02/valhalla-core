@@ -40,18 +40,18 @@ func NewTestDatabase(uuid string) (*sql.DB, *verrors.VError) {
 	path := fmt.Sprintf("%s/%s", TestDatabasePath, "temp")
 	err := os.MkdirAll(path, 0775)
 	if err != nil {
-		return nil, verrors.New(verrors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
 
 	name := fmt.Sprintf("%s/%s.db", path, uuid)
 	db, err := database.Connect(name)
 	if err != nil {
-		return nil, verrors.New(verrors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
 
 	err = tables.UpdateDatabaseTablesToLatestVersion(TestDatabasePath, tables.MainDatabase, db)
 	if err != nil {
-		return nil, verrors.New(verrors.DatabaseError, err.Error())
+		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
 
 	return db, nil
