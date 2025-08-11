@@ -111,7 +111,7 @@ func registerEndpoints(endpoints []apimodels.Endpoint, configuration *configurat
 
 			// Apply middleware to the request
 			err = applyMiddleware(context)
-			defer database.ReturnConnection(context.Database)
+			defer database.Close(context.Database)
 			if nil != err {
 				logger.Error(
 					context.Trazability.Endpoint.Path,
@@ -157,19 +157,18 @@ func applyMiddleware(context *apimodels.APIContext) *verrors.APIError {
 
 func Start() {
 	configuration := configuration.LoadConfiguration(EnvFilePath)
-	err := database.StartConnectionPool()
+	db, err := database.GetConnection()
 	if nil != err {
 		logger.Error(err)
 		return
 	}
 
-	db := database.GetConnection()
 	err = tables.UpdateDatabaseTablesToLatestVersion(".", tables.MainDatabase, db)
 	if nil != err {
 		logger.Error(err)
 		return
 	}
-	database.ReturnConnection(db)
+	database.Close(db)
 
 	startAPI(&configuration, &EndpointRegistry)
 }

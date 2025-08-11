@@ -11,15 +11,13 @@ import (
 
 func Start() {
 
-	err := database.StartConnectionPool()
+	// Connect to database
+	db, err := database.GetConnection()
 	if nil != err {
-		logger.Errorf(err)
+		logger.Error(err)
 		return
 	}
-
-	// Connect to database
-	db := database.GetConnection()
-	defer database.ReturnConnection(db)
+	defer database.Close(db)
 	fmt.Println("Connected to the SQLite database successfully.")
 
 	// Create tables

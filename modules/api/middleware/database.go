@@ -11,12 +11,14 @@ func Database(context *apimodels.APIContext) *verrors.APIError {
 		return nil
 	}
 
-	context.Database = database.GetConnection()
+	db, err := database.GetConnection()
+	if nil != err {
+		return verrors.NewAPIError(verrors.DatabaseError(verrors.CannotConnectToDatabaseMessage))
+	}
+
+	context.Database = db
 	if nil == context.Database {
-		return verrors.NewAPIError(&verrors.VError{
-			Code:    verrors.DatabaseErrorCode,
-			Message: "Cannot connect to database.",
-		})
+		return verrors.NewAPIError(verrors.DatabaseError(verrors.CannotConnectToDatabaseMessage))
 	}
 
 	return nil
