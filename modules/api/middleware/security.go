@@ -24,12 +24,7 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 		}
 	}
 
-	db, err := database.Connect("valhalla.db")
-	if nil != err {
-		return verrors.NewAPIError(verrors.DatabaseError(verrors.CannotConnectToDatabaseMessage))
-	}
-
-	context.Database = db
+	context.Database = database.GetConnection()
 
 	// Check if token is valid
 	if !tokenIsValid(context.Request.Authorization) {

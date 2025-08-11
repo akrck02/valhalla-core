@@ -3,6 +3,7 @@ package configuration
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -17,18 +18,20 @@ type APIConfiguration struct {
 	CorsAccessControlAllowMethods string
 	CorsAccessControlAllowHeaders string
 	CorsAccessControlMaxAge       string
+
+	JWTSecret            string
+	JWTRegisteredDomains []string
 }
 
 // Load configuration from given env file
 func LoadConfiguration(path string) APIConfiguration {
-
 	err := godotenv.Load(path)
 
 	if nil != err {
 		log.Fatal("Error loading .env file: " + err.Error())
 	}
 
-	var configuration = APIConfiguration{
+	configuration := APIConfiguration{
 		Ip:      os.Getenv("IP"),
 		Port:    os.Getenv("PORT"),
 		Version: os.Getenv("VERSION"),
@@ -38,6 +41,9 @@ func LoadConfiguration(path string) APIConfiguration {
 		CorsAccessControlAllowMethods: os.Getenv("CORS_METHODS"),
 		CorsAccessControlAllowHeaders: os.Getenv("CORS_HEADERS"),
 		CorsAccessControlMaxAge:       os.Getenv("CORS_MAX_AGE"),
+
+		JWTRegisteredDomains: strings.Split(os.Getenv("JWT_REGISTERED_DOMAINS"), ","),
+		JWTSecret:            os.Getenv("JWT_SECRET"),
 	}
 
 	setDefaultVariablesIfNeeded(&configuration)
@@ -47,23 +53,21 @@ func LoadConfiguration(path string) APIConfiguration {
 
 // Set defualt variables to configuration if needed
 func setDefaultVariablesIfNeeded(configuration *APIConfiguration) {
-
-	if "" == configuration.Ip {
+	if configuration.Ip == "" {
 		configuration.Ip = "127.0.0.1"
 	}
 
-	if "" == configuration.Port {
+	if configuration.Port == "" {
 		configuration.Ip = "8080"
 	}
 
-	if "" == configuration.ApiName {
+	if configuration.ApiName == "" {
 		configuration.Ip = "api"
 	}
 
-	if "" == configuration.Version {
+	if configuration.Version == "" {
 		configuration.Ip = "v1"
 	}
-
 }
 
 // Print currentApiConfiguration
@@ -82,6 +86,9 @@ func printCurrentApiConfiguration(configuration *APIConfiguration) {
 	log.Printf("CORS_METHODS: %s", configuration.CorsAccessControlAllowMethods)
 	log.Printf("CORS_HEADERS: %s", configuration.CorsAccessControlAllowHeaders)
 	log.Printf("CORS_MAX_AGE: %s", configuration.CorsAccessControlMaxAge)
+	log.Println()
+	log.Printf("JWT_REGISTERED_DOMAINS: %s", strings.Join(configuration.JWTRegisteredDomains, ","))
+	log.Println()
 }
 
 // Get if current environment is development

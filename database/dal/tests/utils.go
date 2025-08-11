@@ -3,7 +3,6 @@ package tests
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/akrck02/valhalla-core/database"
@@ -36,15 +35,9 @@ func AssertVError(t *testing.T, error *verrors.VError, code verrors.VErrorCode, 
 	Assert(t, error.Code == code && error.Message == message, fmt.Sprintf("\n[%d - %s] \nwas expected but \n[%d - %s] \nwas found\n", code, message, error.Code, error.Message))
 }
 
-func NewTestDatabase(uuid string) (*sql.DB, *verrors.VError) {
-	path := fmt.Sprintf("%s/%s", TestDatabasePath, "temp")
-	err := os.MkdirAll(path, 0775)
-	if err != nil {
-		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
-	}
+func NewTestDatabase() (*sql.DB, *verrors.VError) {
 
-	name := fmt.Sprintf("%s/%s.db", path, uuid)
-	db, err := database.Connect(name)
+	db, err := database.Connect(":memory:")
 	if err != nil {
 		return nil, verrors.New(verrors.DatabaseErrorCode, err.Error())
 	}
@@ -55,9 +48,4 @@ func NewTestDatabase(uuid string) (*sql.DB, *verrors.VError) {
 	}
 
 	return db, nil
-}
-
-func RemoveDatabase(uuid string) {
-	path := fmt.Sprintf("%s/%s", TestDatabasePath, "temp")
-	os.Remove(fmt.Sprintf("%s/%s.db", path, uuid))
 }

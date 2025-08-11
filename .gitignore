@@ -3,3 +3,4 @@ valhalla-test.db
 .env
 temp
 data
+modules/bot

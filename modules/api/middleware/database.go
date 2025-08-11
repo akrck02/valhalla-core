@@ -11,15 +11,13 @@ func Database(context *apimodels.APIContext) *verrors.APIError {
 		return nil
 	}
 
-	db, err := database.Connect("valhalla.db")
-	if nil != err {
+	context.Database = database.GetConnection()
+	if nil == context.Database {
 		return verrors.NewAPIError(&verrors.VError{
 			Code:    verrors.DatabaseErrorCode,
 			Message: "Cannot connect to database.",
 		})
 	}
-
-	context.Database = db
 
 	return nil
 }

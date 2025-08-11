@@ -11,14 +11,15 @@ import (
 
 func Start() {
 
-	// Connect to database
-	db, err := database.Connect("./valhalla.db")
+	err := database.StartConnectionPool()
 	if nil != err {
 		logger.Errorf(err)
 		return
 	}
 
-	defer db.Close()
+	// Connect to database
+	db := database.GetConnection()
+	defer database.ReturnConnection(db)
 	fmt.Println("Connected to the SQLite database successfully.")
 
 	// Create tables
@@ -32,7 +33,7 @@ func Start() {
 	var sqliteVersion string
 	err = db.QueryRow("select sqlite_version()").Scan(&sqliteVersion)
 	if err != nil {
-		fmt.Println(err)
+		logger.Errorf(err)
 		return
 	}
 
