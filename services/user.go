@@ -12,8 +12,6 @@ import (
 )
 
 func RegisterUser(db *sql.DB, user models.User) (*int64, *verrors.VError) {
-	defer db.Close()
-
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, verrors.DatabaseError(err.Error())
@@ -30,7 +28,6 @@ func RegisterUser(db *sql.DB, user models.User) (*int64, *verrors.VError) {
 }
 
 func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
-	defer db.Close()
 
 	user, err := dal.GetUser(db, id)
 	if nil != err {
@@ -41,7 +38,6 @@ func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
-	defer db.Close()
 
 	user, err := dal.GetUserByEmail(db, email)
 	if nil != err {
@@ -52,7 +48,6 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
 }
 
 func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension string) *verrors.VError {
-
 	if nil == data {
 		return verrors.InvalidRequest(verrors.UserProfilePictureEmptyMessage)
 	}
@@ -87,4 +82,18 @@ func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension 
 	}
 
 	return nil
+}
+
+func Login(db *sql.DB, serviceID string, registeredDomains []string, secret string, email string, password string, device *models.Device) (*string, *verrors.VError) {
+
+	token, err := dal.Login(db, serviceID, registeredDomains, secret, email, password, device)
+	if nil != err {
+		return nil, err
+	}
+
+	return token, nil
+}
+
+func LoginWithAuth(db *sql.DB, secret string, token string) *verrors.VError {
+	return dal.LoginWithAuth(db, secret, token)
 }

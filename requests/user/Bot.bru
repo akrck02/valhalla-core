@@ -1,0 +1,15 @@
+meta {
+  name: Bot
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/ddos
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

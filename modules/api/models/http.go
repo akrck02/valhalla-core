@@ -30,7 +30,7 @@ const (
 type MimeType string
 
 const (
-	MineApplicationJSON        MimeType = "application/json"
+	MimeApplicationJSON        MimeType = "application/json"
 	MimeApplicationXML         MimeType = "application/xml"
 	MimeApplicationYaml        MimeType = "application/yaml"
 	MimeApplicationForm        MimeType = "application/x-www-form-urlencoded"

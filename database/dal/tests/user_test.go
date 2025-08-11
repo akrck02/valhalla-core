@@ -7,15 +7,12 @@ import (
 	"github.com/akrck02/valhalla-core/database/dal"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/models"
-	"github.com/google/uuid"
 )
 
 func TestUserCrud(t *testing.T) {
-	databaseUUID := uuid.NewString()
-	db, err := NewTestDatabase(databaseUUID)
+	db, err := NewTestDatabase()
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
-	defer RemoveDatabase(databaseUUID)
 
 	expectedUser := &models.User{
 		Email:    "user@valhalla.org",
@@ -139,12 +136,9 @@ func updateUserProfilePicture(t *testing.T, db *sql.DB, user *models.User) *mode
 }
 
 func TestUserLogin(t *testing.T) {
-	databaseUUID := uuid.NewString()
-	db, err := NewTestDatabase(databaseUUID)
+	db, err := NewTestDatabase()
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
-	defer RemoveDatabase(databaseUUID)
-
 	expectedUser := &models.User{
 		Email:    "user@valhalla.org",
 		Password: "$P4ssw0rdW3db1128",

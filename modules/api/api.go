@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	_ "net/http/pprof"
 	"time"
 
 	"github.com/akrck02/valhalla-core/database"
@@ -33,7 +33,7 @@ var APIMiddleware = []middleware.Middleware{
 	middleware.Database,
 }
 
-func startAPI(configuration configuration.APIConfiguration, endpoints []apimodels.Endpoint) {
+func startAPI(configuration *configuration.APIConfiguration, endpoints *[]apimodels.Endpoint) {
 	// show log app title and start router
 	log.Println("-----------------------------------")
 	log.Println(" ", configuration.ApiName, " ")
@@ -41,13 +41,13 @@ func startAPI(configuration configuration.APIConfiguration, endpoints []apimodel
 
 	// Add API path to endpoints
 	newEndpoints := []apimodels.Endpoint{}
-	for _, endpoint := range endpoints {
+	for _, endpoint := range *endpoints {
 		endpoint.Path = APIPath + configuration.ApiName + "/" + configuration.Version + "/" + endpoint.Path
 		newEndpoints = append(newEndpoints, endpoint)
 	}
 
 	// Register endpoints
-	registerEndpoints(newEndpoints)
+	registerEndpoints(newEndpoints, configuration)
 
 	// Start listening HTTP requests
 	log.Printf("API started on http://%s:%s%s", configuration.Ip, configuration.Port, APIPath)
@@ -55,7 +55,7 @@ func startAPI(configuration configuration.APIConfiguration, endpoints []apimodel
 	log.Print(state.Error())
 }
 
-func registerEndpoints(endpoints []apimodels.Endpoint) {
+func registerEndpoints(endpoints []apimodels.Endpoint, configuration *configuration.APIConfiguration) {
 	for _, endpoint := range endpoints {
 
 		switch endpoint.Method {
@@ -77,11 +77,12 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 		setEndpointDefaults(&endpoint)
 
 		http.HandleFunc(endpoint.Path, func(writer http.ResponseWriter, reader *http.Request) {
+
 			// enable CORS
-			writer.Header().Set("Access-Control-Allow-Origin", os.Getenv("CORS_ORIGIN"))
-			writer.Header().Set("Access-Control-Allow-Methods", os.Getenv("CORS_METHODS"))
-			writer.Header().Set("Access-Control-Allow-Headers", os.Getenv("CORS_HEADERS"))
-			writer.Header().Set("Access-Control-Max-Age", os.Getenv("CORS_MAX_AGE"))
+			writer.Header().Set("Access-Control-Allow-Origin", configuration.CorsAccessControlAllowOrigin)
+			writer.Header().Set("Access-Control-Allow-Methods", configuration.CorsAccessControlAllowMethods)
+			writer.Header().Set("Access-Control-Allow-Headers", configuration.CorsAccessControlAllowHeaders)
+			writer.Header().Set("Access-Control-Max-Age", configuration.CorsAccessControlMaxAge)
 
 			// calculate the time of the request
 			start := time.Now()
@@ -104,12 +105,13 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 					err.Message,
 				)
 
-				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJSON)
 				return
 			}
 
 			// Apply middleware to the request
 			err = applyMiddleware(context)
+			defer database.Close(context.Database)
 			if nil != err {
 				logger.Error(
 					context.Trazability.Endpoint.Path,
@@ -118,8 +120,7 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 					fmt.Sprintf("[%d]", err.Status),
 					err.Message,
 				)
-
-				middleware.SendResponse(writer, err.Status, err, apimodels.MineApplicationJSON)
+				middleware.SendResponse(writer, err.Status, err, apimodels.MimeApplicationJSON)
 				return
 			}
 
@@ -130,17 +131,16 @@ func registerEndpoints(endpoints []apimodels.Endpoint) {
 }
 
 func setEndpointDefaults(endpoint *apimodels.Endpoint) {
-
 	if nil == endpoint.Listener {
 		endpoint.Listener = controllers.NotImplemented
 	}
 
 	if endpoint.RequestMimeType == "" {
-		endpoint.RequestMimeType = apimodels.MineApplicationJSON
+		endpoint.RequestMimeType = apimodels.MimeApplicationJSON
 	}
 
 	if endpoint.ResponseMimeType == "" {
-		endpoint.ResponseMimeType = apimodels.MineApplicationJSON
+		endpoint.ResponseMimeType = apimodels.MimeApplicationJSON
 	}
 }
 
@@ -157,8 +157,7 @@ func applyMiddleware(context *apimodels.APIContext) *verrors.APIError {
 
 func Start() {
 	configuration := configuration.LoadConfiguration(EnvFilePath)
-
-	db, err := database.Connect("valhalla.db")
+	db, err := database.GetConnection()
 	if nil != err {
 		logger.Error(err)
 		return
@@ -169,8 +168,7 @@ func Start() {
 		logger.Error(err)
 		return
 	}
+	database.Close(db)
 
-	db.Close()
-
-	startAPI(configuration, EndpointRegistry)
+	startAPI(&configuration, &EndpointRegistry)
 }
