@@ -52,8 +52,6 @@ var UserGetEndpoint = apimodels.Endpoint{
 }
 
 func Get(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
-
 	id, err := context.Request.GetParamInt64("id")
 	if err != nil {
 		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
@@ -78,8 +76,6 @@ var UserGetByEmailEndpoint = apimodels.Endpoint{
 }
 
 func GetByEmail(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
-
 	email := context.Request.Params["email"]
 	user, err := services.GetUserByEmail(context.Database, email)
 	if nil != err {
@@ -100,8 +96,6 @@ var UserUpdatePasswordEndpoint = apimodels.Endpoint{
 }
 
 func UpdatePassword(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
-
 	_, err := context.Request.GetParamInt64("id")
 	if err != nil {
 		return nil, verrors.NewAPIError(verrors.New(verrors.InvalidRequestErrorCode, err.Error()))
@@ -119,8 +113,6 @@ var UserUpdateProfilePicEndpoint = apimodels.Endpoint{
 }
 
 func UpdateProfilePicture(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
-
 	id, err := context.Request.GetParamInt64("id")
 	if err != nil {
 		return nil, verrors.NewAPIError(verrors.InvalidRequest(err.Error()))
@@ -159,8 +151,6 @@ var UserUpdateEmailEndpoint = apimodels.Endpoint{
 }
 
 func UpdateEmail(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
-
 	return nil, nil
 }
 
@@ -172,7 +162,23 @@ var LoginEndpoint = apimodels.Endpoint{
 }
 
 func Login(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	defer context.Database.Close()
+	email := context.Request.Params["email"]
+	password := context.Request.Params["password"]
+	serviceID := ""
+	registeredDomains := []string{"http://a.com"}
+	secret := "secret"
 
+	services.Login(
+		context.Database,
+		serviceID,
+		registeredDomains,
+		secret,
+		email,
+		password,
+		&models.Device{
+			Address:   context.Request.IP,
+			UserAgent: context.Request.UserAgent,
+		},
+	)
 	return nil, nil
 }

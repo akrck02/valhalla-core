@@ -50,7 +50,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	}
 
 	statement, err := db.Prepare(
-		"INSERT INTO user(email, profile_pic, password, database, validation_code, insert_date) VALUES(?,?,?,?,?,?)",
+		"INSERT INTO user(email, password, database, validation_code, insert_date) VALUES(?,?,?,?,?)",
 	)
 
 	if nil != err {
@@ -59,7 +59,6 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 
 	res, err := statement.Exec(
 		user.Email,
-		user.ProfilePicture,
 		hashedPassword,
 		uuid.NewString(),
 		uuid.NewString(),

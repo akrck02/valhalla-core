@@ -37,7 +37,6 @@ func UpdateDatabaseTablesToLatestVersion(basePath string, database AvailableData
 	if err != nil {
 		return err
 	}
-
 	return updateTablesForVersion(basePath, db, database, databaseVersion, latestDbVersion)
 }
 

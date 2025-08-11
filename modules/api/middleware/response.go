@@ -18,7 +18,7 @@ type EmptyResponse struct{}
 // Response handle middleware function
 func Response(context *apimodels.APIContext, writer http.ResponseWriter) {
 	switch context.Trazability.Endpoint.ResponseMimeType {
-	case apimodels.MineApplicationJSON:
+	case apimodels.MimeApplicationJSON:
 		sendJSONHandlingErrors(context, writer)
 	default:
 		sendResponseCatchingErrors(context, writer)
@@ -48,7 +48,7 @@ func sendJSONHandlingErrors(context *apimodels.APIContext, writer http.ResponseW
 			fmt.Sprintf("[%d]", responseError.Status),
 			responseError.Message,
 		)
-		SendResponse(writer, responseError.Status, responseError, apimodels.MineApplicationJSON)
+		SendResponse(writer, responseError.Status, responseError, apimodels.MimeApplicationJSON)
 		return
 	}
 
@@ -63,7 +63,7 @@ func sendJSONHandlingErrors(context *apimodels.APIContext, writer http.ResponseW
 	// send response
 	response.ResponseTime = time.Since(start).Nanoseconds()
 	context.Response = *response
-	SendResponse(writer, response.Code, response, apimodels.MineApplicationJSON)
+	SendResponse(writer, response.Code, response, apimodels.MimeApplicationJSON)
 	logger.Success(
 		context.Trazability.Endpoint.Path,
 		time.Since(start).Microseconds(),
@@ -79,7 +79,7 @@ func sendResponseCatchingErrors(context *apimodels.APIContext, writer http.Respo
 
 	// if something went wrong, return error
 	if nil != responseError {
-		SendResponse(writer, responseError.Status, responseError, apimodels.MineApplicationJSON)
+		SendResponse(writer, responseError.Status, responseError, apimodels.MimeApplicationJSON)
 		return
 	}
 
