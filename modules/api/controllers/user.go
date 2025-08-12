@@ -156,29 +156,37 @@ func UpdateEmail(context *apimodels.APIContext) (*apimodels.Response, *verrors.A
 
 var LoginEndpoint = apimodels.Endpoint{
 	Path:     "users/login",
-	Method:   apimodels.PatchMethod,
+	Method:   apimodels.PostMethod,
 	Listener: Login,
 	Secured:  false,
+	Database: true,
 }
 
 func Login(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
-	email := context.Request.Params["email"]
-	password := context.Request.Params["password"]
-	serviceID := ""
-	registeredDomains := []string{"http://a.com"}
-	secret := "secret"
 
-	services.Login(
+	body := context.Request.Body.(io.ReadCloser)
+	var params map[string]string
+	inout.ParseJSON(&body, &params)
+
+	token, err := services.Login(
 		context.Database,
-		serviceID,
-		registeredDomains,
-		secret,
-		email,
-		password,
+		"valhalla-core",
+		context.Configuration.JWTRegisteredDomains,
+		context.Configuration.JWTSecret,
+		params["em"],
+		params["ps"],
 		&models.Device{
 			Address:   context.Request.IP,
 			UserAgent: context.Request.UserAgent,
 		},
 	)
-	return nil, nil
+
+	if nil != err {
+		return nil, verrors.NewAPIError(err)
+	}
+
+	return &apimodels.Response{
+		Code:     http.StatusOK,
+		Response: token,
+	}, nil
 }

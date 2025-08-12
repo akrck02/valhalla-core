@@ -1,5 +1,6 @@
 valhalla.db
-valhalla-test.db
+valhalla.db-shm
+valhalla.db-wal
 .env
 temp
 data

@@ -92,6 +92,7 @@ func registerEndpoints(endpoints []apimodels.Endpoint, configuration *configurat
 				Trazability: apimodels.Trazability{
 					Endpoint: endpoint,
 				},
+				Configuration: configuration,
 			}
 
 			// Get request data

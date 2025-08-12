@@ -7,7 +7,7 @@ import (
 )
 
 type APIContext struct {
-	Configuration configuration.APIConfiguration
+	Configuration *configuration.APIConfiguration
 	Trazability   Trazability
 	Request       Request
 	Response      Response

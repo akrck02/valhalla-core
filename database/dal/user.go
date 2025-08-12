@@ -12,6 +12,7 @@ import (
 
 	"github.com/akrck02/valhalla-core/sdk/cryptography"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
+	"github.com/akrck02/valhalla-core/sdk/logger"
 	"github.com/akrck02/valhalla-core/sdk/models"
 	"github.com/akrck02/valhalla-core/sdk/validations"
 )
@@ -356,6 +357,8 @@ func Login(
 	rows.Scan(&userID, &hash)
 	rows.Close()
 
+	logger.Log(hash)
+	logger.Log(password)
 	err = cryptography.CompareHash(hash, password)
 	if nil != err {
 		return nil, verrors.AccessDenied(verrors.AccessDeniedMessage)

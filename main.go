@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	modeFlag := flag.String("mode", "api", "valhalla-core -mode=api")
 	flag.Parse()
 
