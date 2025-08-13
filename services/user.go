@@ -94,6 +94,6 @@ func Login(db *sql.DB, serviceID string, registeredDomains []string, secret stri
 	return token, nil
 }
 
-func LoginWithAuth(db *sql.DB, secret string, token string) (*models.Device, *verrors.VError) {
+func LoginWithAuth(db *sql.DB, secret string, token string) (*models.AuthDevice, *verrors.VError) {
 	return dal.LoginWithAuth(db, secret, token)
 }

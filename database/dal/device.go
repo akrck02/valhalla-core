@@ -63,6 +63,28 @@ func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*mod
 	}, nil
 }
 
+func GetUserDevices(db *sql.DB, userID int64) ([]models.Device, *verrors.VError) {
+	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ?")
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	rows, err := statement.Query(userID)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+	defer rows.Close()
+
+	devices := []models.Device{}
+	for rows.Next() {
+		var device models.Device
+		rows.Scan(&device)
+		devices = append(devices, device)
+	}
+
+	return devices, nil
+}
+
 func GetDeviceByAuth(db *sql.DB, userID int64, userAgent string, address string, token string) (*models.Device, *verrors.VError) {
 	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ? AND user_agent = ? AND address = ? AND token = ?")
 	if nil != err {

@@ -398,7 +398,7 @@ func Login(
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, secret string, token string) (*models.Device, *verrors.VError) {
+func LoginWithAuth(db *sql.DB, secret string, token string) (*models.AuthDevice, *verrors.VError) {
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
@@ -430,7 +430,10 @@ func LoginWithAuth(db *sql.DB, secret string, token string) (*models.Device, *ve
 		return nil, verrors.InvalidRequest(verrors.TokenInvalidMessage)
 	}
 
-	return device, nil
+	return &models.AuthDevice{
+		UserId: user.ID,
+		Device: *device,
+	}, nil
 }
 
 func ValidateUserAccount(db *sql.DB, code string) *verrors.VError {

@@ -10,6 +10,11 @@ type Device struct {
 	UpdateDate int64  `json:"ud,omitempty"`
 }
 
+type AuthDevice struct {
+	UserId int64
+	Device
+}
+
 type DeviceToken struct {
 	Address   string `json:"ad,omitempty"`
 	UserAgent string `json:"ua,omitempty"`

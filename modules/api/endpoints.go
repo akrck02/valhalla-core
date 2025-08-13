@@ -14,4 +14,5 @@ var EndpointRegistry = []apimodels.Endpoint{
 	controllers.UserUpdateProfilePicEndpoint,
 	controllers.LoginEndpoint,
 	controllers.LoginWithAuthEndpoint,
+	controllers.GetUserDevicesEndpoint,
 }

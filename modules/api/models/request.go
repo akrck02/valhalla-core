@@ -11,6 +11,7 @@ import (
 
 type Request struct {
 	Authorization string                             `json:"authorization,omitempty"`
+	UserID        *int64                             `json:"userID,omitempty"`
 	IP            string                             `json:"ip,omitempty"`
 	UserAgent     string                             `json:"userAgent,omitempty"`
 	Params        map[string]string                  `json:"params,omitempty"`

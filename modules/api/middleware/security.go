@@ -32,12 +32,13 @@ func Security(context *apimodels.APIContext) *verrors.APIError {
 
 	// Check if token is valid
 	token, _ := strings.CutPrefix(context.Request.Authorization, "Bearer ")
-	_, verr := dal.LoginWithAuth(context.Database, context.Configuration.JWTSecret, token)
+	dev, verr := dal.LoginWithAuth(context.Database, context.Configuration.JWTSecret, token)
 	if nil != verr {
 		logger.Error(token)
 		logger.Error(verr)
 		return verrors.NewAPIError(verrors.Unauthorized(verrors.TokenInvalidMessage))
 	}
 
+	context.Request.UserID = &dev.UserId
 	return nil
 }

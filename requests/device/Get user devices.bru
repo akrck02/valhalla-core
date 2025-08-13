@@ -1,0 +1,15 @@
+meta {
+  name: Get user devices
+  type: http
+  seq: 10
+}
+
+get {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.devices.endpoint}}/user
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
