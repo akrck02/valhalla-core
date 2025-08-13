@@ -1,7 +1,7 @@
 valhalla.db
 valhalla.db-shm
 valhalla.db-wal
-
+.env
 temp
 data
 modules/bot
