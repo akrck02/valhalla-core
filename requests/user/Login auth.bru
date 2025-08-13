@@ -1,0 +1,15 @@
+meta {
+  name: Login auth
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/login/auth
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

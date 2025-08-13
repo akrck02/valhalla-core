@@ -63,13 +63,35 @@ func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*mod
 	}, nil
 }
 
+func GetDeviceByAuth(db *sql.DB, userID int64, userAgent string, address string, token string) (*models.Device, *verrors.VError) {
+	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ? AND user_agent = ? AND address = ? AND token = ?")
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+
+	rows, err := statement.Query(userID, userAgent, address, token)
+	if nil != err {
+		return nil, verrors.DatabaseError(err.Error())
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, verrors.NotFound("Device not found.")
+	}
+
+	var d models.Device
+	rows.Scan(&d)
+
+	return &d, nil
+}
+
 func UpdateDeviceToken(db *sql.DB, userID int64, userAgent string, address string, token string) *verrors.VError {
-	statement, err := db.Prepare("UPDATE device SET token = ? WHERE user_id = ? AND user_agent = ? AND address = ?")
+	statement, err := db.Prepare("UPDATE device SET token = ?, update_date = ? WHERE user_id = ? AND user_agent = ? AND address = ?")
 	if nil != err {
 		return verrors.DatabaseError(err.Error())
 	}
 
-	res, err := statement.Exec(token, userID, userAgent, address)
+	res, err := statement.Exec(token, time.Now(), userID, userAgent, address)
 	if nil != err {
 		return verrors.DatabaseError(err.Error())
 	}

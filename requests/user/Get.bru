@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/1
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/:userid
   body: none
   auth: inherit
+}
+
+params:path {
+  userid: 1
 }
 
 settings {

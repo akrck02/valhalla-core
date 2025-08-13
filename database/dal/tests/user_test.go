@@ -223,16 +223,16 @@ func login(t *testing.T, db *sql.DB) {
 }
 
 func loginWithAuthValidation(t *testing.T, db *sql.DB) {
-	err := dal.LoginWithAuth(nil, "", "")
+	_, err := dal.LoginWithAuth(nil, "", "")
 	AssertVError(t, err, verrors.UnexpectedErrorCode, verrors.DatabaseConnectionEmptyMessage)
 
-	err = dal.LoginWithAuth(db, "", "")
+	_, err = dal.LoginWithAuth(db, "", "")
 	AssertVError(t, err, verrors.UnexpectedErrorCode, verrors.SecretEmptyMessage)
 
-	err = dal.LoginWithAuth(db, "secret", "")
+	_, err = dal.LoginWithAuth(db, "secret", "")
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.TokenEmptyMessage)
 
-	err = dal.LoginWithAuth(db, "secret", "token")
+	_, err = dal.LoginWithAuth(db, "secret", "token")
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, "token is malformed: token contains an invalid number of segments")
 }
 
@@ -251,10 +251,10 @@ func loginWithAuth(t *testing.T, db *sql.DB) {
 	)
 	AssertVErrorDoesNotExist(t, err)
 
-	err = dal.LoginWithAuth(db, "secret", *token)
+	_, err = dal.LoginWithAuth(db, "secret", *token)
 	AssertVErrorDoesNotExist(t, err)
 
-	err = dal.LoginWithAuth(db, "secret1", *token)
+	_, err = dal.LoginWithAuth(db, "secret1", *token)
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, "token signature is invalid: signature is invalid")
 }
 

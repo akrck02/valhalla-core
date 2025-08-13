@@ -1,0 +1,22 @@
+meta {
+  name: Login
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.users.endpoint}}/login
+  body: json
+  auth: none
+}
+
+body:json {
+   {
+     "em" : "user@valhalla.org",
+     "ps" : "#A28nbnsbfnd2738!!$%&9@#13"
+   }
+}
+
+settings {
+  encodeUrl: true
+}
