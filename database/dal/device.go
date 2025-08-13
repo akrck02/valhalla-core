@@ -64,12 +64,12 @@ func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*mod
 }
 
 func UpdateDeviceToken(db *sql.DB, userID int64, userAgent string, address string, token string) *verrors.VError {
-	statement, err := db.Prepare("UPDATE device SET token = ? WHERE user_id = ? AND user_agent = ? AND address = ?")
+	statement, err := db.Prepare("UPDATE device SET token = ?, update_date = ? WHERE user_id = ? AND user_agent = ? AND address = ?")
 	if nil != err {
 		return verrors.DatabaseError(err.Error())
 	}
 
-	res, err := statement.Exec(token, userID, userAgent, address)
+	res, err := statement.Exec(token, time.Now(), userID, userAgent, address)
 	if nil != err {
 		return verrors.DatabaseError(err.Error())
 	}

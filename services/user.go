@@ -8,7 +8,6 @@ import (
 	"github.com/akrck02/valhalla-core/database/dal"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	inout "github.com/akrck02/valhalla-core/sdk/io"
-	"github.com/akrck02/valhalla-core/sdk/logger"
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
@@ -87,8 +86,6 @@ func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension 
 
 func Login(db *sql.DB, serviceID string, registeredDomains []string, secret string, email string, password string, device *models.Device) (*string, *verrors.VError) {
 
-	logger.Log("email", email)
-	logger.Log("password", password)
 	token, err := dal.Login(db, serviceID, registeredDomains, secret, email, password, device)
 	if nil != err {
 		return nil, err
