@@ -190,3 +190,16 @@ func Login(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIErro
 		Response: token,
 	}, nil
 }
+
+var LoginWithAuthEndpoint = apimodels.Endpoint{
+	Path:     "users/login/auth",
+	Method:   apimodels.PostMethod,
+	Listener: LoginWithAuth,
+	Secured:  true,
+}
+
+func LoginWithAuth(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
+	return &apimodels.Response{
+		Code: http.StatusOK,
+	}, nil
+}

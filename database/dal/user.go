@@ -398,47 +398,39 @@ func Login(
 	return &token, nil
 }
 
-func LoginWithAuth(db *sql.DB, secret string, token string) *verrors.VError {
+func LoginWithAuth(db *sql.DB, secret string, token string) (*models.Device, *verrors.VError) {
 	if nil == db {
-		return verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
+		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
 
 	if strings.TrimSpace(secret) == "" {
-		return verrors.Unexpected(verrors.SecretEmptyMessage)
+		return nil, verrors.Unexpected(verrors.SecretEmptyMessage)
 	}
 
 	if strings.TrimSpace(token) == "" {
-		return verrors.InvalidRequest(verrors.TokenEmptyMessage)
+		return nil, verrors.InvalidRequest(verrors.TokenEmptyMessage)
 	}
 
-	device, err := getDeviceFromUserToken(secret, token)
+	deviceToken, err := getDeviceFromUserToken(secret, token)
 	if nil != err {
-		return verrors.InvalidRequest(err.Error())
+		return nil, verrors.InvalidRequest(err.Error())
 	}
 
-	user, getUserErr := GetUserByEmail(db, device.Subject)
+	user, getUserErr := GetUserByEmail(db, deviceToken.Subject)
 	if nil != getUserErr {
-		return getUserErr
+		return nil, getUserErr
 	}
 
-	statement, err := db.Prepare(
-		"SELECT user_id, address, user_agent FROM device WHERE user_id = ? AND address = ? AND user_agent = ? AND token = ?",
-	)
-	if nil != err {
-		return verrors.DatabaseError(err.Error())
+	device, verr := GetDeviceByAuth(db, user.ID, deviceToken.UserAgent, deviceToken.Address, token)
+	if nil != verr {
+		return nil, verr
 	}
 
-	rows, err := statement.Query(user.ID, device.Address, device.UserAgent, token)
-	if nil != err {
-		return verrors.DatabaseError(err.Error())
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		return verrors.InvalidRequest(verrors.TokenInvalidMessage)
+	if nil == device {
+		return nil, verrors.InvalidRequest(verrors.TokenInvalidMessage)
 	}
 
-	return nil
+	return device, nil
 }
 
 func ValidateUserAccount(db *sql.DB, code string) *verrors.VError {
