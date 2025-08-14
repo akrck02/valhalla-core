@@ -5,6 +5,7 @@ import (
 	"time"
 
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
+	"github.com/akrck02/valhalla-core/sdk/logger"
 	"github.com/akrck02/valhalla-core/sdk/models"
 )
 
@@ -64,6 +65,7 @@ func GetDevice(db *sql.DB, userID int64, userAgent string, address string) (*mod
 }
 
 func GetUserDevices(db *sql.DB, userID int64) ([]models.Device, *verrors.VError) {
+
 	statement, err := db.Prepare("SELECT user_agent, address, token, insert_date, update_date FROM device WHERE user_id = ?")
 	if nil != err {
 		return nil, verrors.DatabaseError(err.Error())
@@ -77,8 +79,10 @@ func GetUserDevices(db *sql.DB, userID int64) ([]models.Device, *verrors.VError)
 
 	devices := []models.Device{}
 	for rows.Next() {
+
 		var device models.Device
 		rows.Scan(&device)
+		logger.Log(device)
 		devices = append(devices, device)
 	}
 

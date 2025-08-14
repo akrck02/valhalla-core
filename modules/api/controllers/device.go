@@ -17,7 +17,7 @@ var GetUserDevicesEndpoint = apimodels.Endpoint{
 
 func GetUserDevices(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
 
-	devices, err := dal.GetDevice(context.Database, *context.Request.UserID, context.Request.UserAgent, context.Request.IP)
+	devices, err := dal.GetUserDevices(context.Database, *context.Request.UserID)
 	if nil != err {
 		return nil, verrors.NewAPIError(err)
 	}
