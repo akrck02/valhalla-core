@@ -1,6 +1,7 @@
 package models
 
 type Project struct {
+	Shared      bool   `json:"sh,omitempty"`
 	Name        string `json:"nm,omitempty"`
 	Description string `json:"ds,omitempty"`
 	InsertDate  int64  `json:"ind,omitempty"`
