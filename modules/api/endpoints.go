@@ -15,4 +15,5 @@ var EndpointRegistry = []apimodels.Endpoint{
 	controllers.LoginEndpoint,
 	controllers.LoginWithAuthEndpoint,
 	controllers.GetUserDevicesEndpoint,
+	controllers.GetDeviceEndpoint,
 }

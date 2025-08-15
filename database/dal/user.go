@@ -14,10 +14,11 @@ import (
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	"github.com/akrck02/valhalla-core/sdk/logger"
 	"github.com/akrck02/valhalla-core/sdk/models"
+	"github.com/akrck02/valhalla-core/sdk/models/schema"
 	"github.com/akrck02/valhalla-core/sdk/validations"
 )
 
-func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
+func RegisterUser(db *sql.DB, user *schema.User) (*int64, *verrors.VError) {
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
@@ -78,7 +79,7 @@ func RegisterUser(db *sql.DB, user *models.User) (*int64, *verrors.VError) {
 	return &user.ID, nil
 }
 
-func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
+func GetUser(db *sql.DB, id int64) (*schema.User, *verrors.VError) {
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
@@ -112,33 +113,20 @@ func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
 		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
 	}
 
-	var obtainedID int64
-	var email string
-	var profilePicture string
-	var password string
-	var database string
-	var insertDate int64
-
+	user := new(schema.User)
 	rows.Scan(
-		&obtainedID,
-		&email,
-		&profilePicture,
-		&password,
-		&database,
-		&insertDate,
+		&user.ID,
+		&user.Email,
+		&user.ProfilePicture,
+		&user.Password,
+		&user.Database,
+		&user.InsertDate,
 	)
 
-	return &models.User{
-		ID:             obtainedID,
-		Email:          email,
-		ProfilePicture: profilePicture,
-		Password:       password,
-		Database:       database,
-		InsertDate:     insertDate,
-	}, nil
+	return user, nil
 }
 
-func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
+func GetUserByEmail(db *sql.DB, email string) (*schema.User, *verrors.VError) {
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
 	}
@@ -172,30 +160,18 @@ func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
 		return nil, verrors.NotFound(verrors.UserNotFoundMessage)
 	}
 
-	var id int64
-	var obtainedEmail string
-	var profilePicture string
-	var password string
-	var database string
-	var insertDate int64
+	user := new(schema.User)
 
 	rows.Scan(
-		&id,
-		&obtainedEmail,
-		&profilePicture,
-		&password,
-		&database,
-		&insertDate,
+		&user.ID,
+		&user.Email,
+		&user.ProfilePicture,
+		&user.Password,
+		&user.Database,
+		&user.InsertDate,
 	)
 
-	return &models.User{
-		ID:             id,
-		Email:          obtainedEmail,
-		ProfilePicture: profilePicture,
-		Password:       password,
-		Database:       database,
-		InsertDate:     insertDate,
-	}, nil
+	return user, nil
 }
 
 func DeleteUser(db *sql.DB, id int64) *verrors.VError {
@@ -304,7 +280,7 @@ func Login(
 	secret string,
 	email string,
 	password string,
-	device *models.Device,
+	device *schema.Device,
 ) (*string, *verrors.VError) {
 	if nil == db {
 		return nil, verrors.Unexpected(verrors.DatabaseConnectionEmptyMessage)
@@ -432,7 +408,7 @@ func LoginWithAuth(db *sql.DB, secret string, token string) (*models.AuthDevice,
 
 	return &models.AuthDevice{
 		UserId: user.ID,
-		Device: *device,
+		Device: (*models.Device)(device),
 	}, nil
 }
 

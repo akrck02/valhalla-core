@@ -6,7 +6,7 @@ import (
 
 	"github.com/akrck02/valhalla-core/database/dal"
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
-	"github.com/akrck02/valhalla-core/sdk/models"
+	"github.com/akrck02/valhalla-core/sdk/models/schema"
 )
 
 func TestUserCrud(t *testing.T) {
@@ -14,7 +14,7 @@ func TestUserCrud(t *testing.T) {
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
 
-	expectedUser := &models.User{
+	expectedUser := &schema.User{
 		Email:    "user@valhalla.org",
 		Password: "$P4ssw0rdW3db1128",
 	}
@@ -38,35 +38,35 @@ func registerValidations(t *testing.T, db *sql.DB) {
 	_, err = dal.RegisterUser(db, nil)
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.UserEmptyMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{})
+	_, err = dal.RegisterUser(db, &schema.User{})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.EmailEmptyMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "uservalhalla.org"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "uservalhalla.org"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, "mail: missing '@' or angle-addr")
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "u@.org"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "u@.org"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, "mail: missing '@' or angle-addr")
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordEmptyMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: ""})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org", Password: ""})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordEmptyMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "abcdefghijklmnñopq"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org", Password: "abcdefghijklmnñopq"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordNoNumericMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "1bcdefghijklmnñopq"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org", Password: "1bcdefghijklmnñopq"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordNoSpecialCharacterMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "#1bcdefghijklmnñop"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org", Password: "#1bcdefghijklmnñop"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordNoUppercaseCharacterMessage)
 
-	_, err = dal.RegisterUser(db, &models.User{Email: "user@valhalla.org", Password: "#1BCDEFGHUJKLMNÑOP"})
+	_, err = dal.RegisterUser(db, &schema.User{Email: "user@valhalla.org", Password: "#1BCDEFGHUJKLMNÑOP"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.PasswordNoLowercaseCharacterMessage)
 }
 
-func registerUser(t *testing.T, db *sql.DB, user *models.User) *models.User {
+func registerUser(t *testing.T, db *sql.DB, user *schema.User) *schema.User {
 	userID, err := dal.RegisterUser(db, user)
 	AssertVErrorDoesNotExist(t, err)
 
@@ -101,7 +101,7 @@ func updateEmailValidations(t *testing.T, db *sql.DB) {
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, "mail: missing '@' or angle-addr")
 }
 
-func updateUserEmail(t *testing.T, db *sql.DB, user *models.User) *models.User {
+func updateUserEmail(t *testing.T, db *sql.DB, user *schema.User) *schema.User {
 	newMail := "user-modified@valhalla.org"
 	userID := user.ID
 	err := dal.UpdateUserEmail(db, userID, newMail)
@@ -122,7 +122,7 @@ func updateUserProfilePictureValidations(t *testing.T, db *sql.DB) {
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.UserIDNegativeMessage)
 }
 
-func updateUserProfilePicture(t *testing.T, db *sql.DB, user *models.User) *models.User {
+func updateUserProfilePicture(t *testing.T, db *sql.DB, user *schema.User) *schema.User {
 	newProfilePic := "my-user-profile-pic.jpg"
 	userID := user.ID
 	err := dal.UpdateUserProfilePicture(db, userID, newProfilePic)
@@ -139,7 +139,7 @@ func TestUserLogin(t *testing.T) {
 	db, err := NewTestDatabase()
 	AssertVErrorDoesNotExist(t, err)
 	defer db.Close()
-	expectedUser := &models.User{
+	expectedUser := &schema.User{
 		Email:    "user@valhalla.org",
 		Password: "$P4ssw0rdW3db1128",
 	}
@@ -177,10 +177,10 @@ func loginValidation(t *testing.T, db *sql.DB) {
 	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", nil)
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.DeviceEmptyMessage)
 
-	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &models.Device{})
+	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &schema.Device{})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.DeviceAddressEmptyMessage)
 
-	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &models.Device{Address: "127.0.0.1"})
+	_, err = dal.Login(db, "valhalla-core", []string{"https://valhalla.org"}, "secret", "user@valhalla.org", "", &schema.Device{Address: "127.0.0.1"})
 	AssertVError(t, err, verrors.InvalidRequestErrorCode, verrors.DeviceUserAgentEmptyMessage)
 }
 
@@ -192,7 +192,7 @@ func login(t *testing.T, db *sql.DB) {
 		"secret",
 		"user@valhalla.org",
 		"$P4ssw0rdW3db1128",
-		&models.Device{
+		&schema.Device{
 			Address:   "127.0.0.1",
 			UserAgent: "Firefox",
 		},
@@ -210,7 +210,7 @@ func login(t *testing.T, db *sql.DB) {
 		"secret",
 		"user@valhalla.org",
 		"$P4ssw0rdW3db1128",
-		&models.Device{
+		&schema.Device{
 			Address:   "127.0.0.1",
 			UserAgent: "Firefox",
 		},
@@ -244,7 +244,7 @@ func loginWithAuth(t *testing.T, db *sql.DB) {
 		"secret",
 		"user@valhalla.org",
 		"$P4ssw0rdW3db1128",
-		&models.Device{
+		&schema.Device{
 			Address:   "127.0.0.1",
 			UserAgent: "Firefox",
 		},

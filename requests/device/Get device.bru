@@ -1,0 +1,21 @@
+meta {
+  name: Get device
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{valhalla.api.host}}:{{valhalla.api.port}}/{{valhalla.api.name}}/{{valhalla.api.version}}/{{valhalla.devices.endpoint}}?userId=1&address=slimbook-executive-16:2000&user_agent=bruno-runtime/2.9.1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  userId: 1
+  address: slimbook-executive-16:2000
+  user_agent: bruno-runtime/2.9.1
+}
+
+settings {
+  encodeUrl: true
+}

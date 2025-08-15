@@ -27,3 +27,28 @@ func GetUserDevices(context *apimodels.APIContext) (*apimodels.Response, *verror
 		Response: devices,
 	}, nil
 }
+
+var GetDeviceEndpoint = apimodels.Endpoint{
+	Path:     "devices",
+	Method:   apimodels.GetMethod,
+	Listener: GetDevice,
+	Secured:  true,
+}
+
+func GetDevice(context *apimodels.APIContext) (*apimodels.Response, *verrors.APIError) {
+
+	userID, err := context.Request.GetParamInt64("userId")
+	if nil != err {
+		return nil, verrors.NewAPIError(verrors.InvalidRequest(err.Error()))
+	}
+
+	devices, verr := dal.GetDevice(context.Database, *userID, context.Request.Params["user_agent"], context.Request.Params["address"])
+	if nil != verr {
+		return nil, verrors.NewAPIError(verr)
+	}
+
+	return &apimodels.Response{
+		Code:     http.StatusOK,
+		Response: devices,
+	}, nil
+}

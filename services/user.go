@@ -9,6 +9,7 @@ import (
 	verrors "github.com/akrck02/valhalla-core/sdk/errors"
 	inout "github.com/akrck02/valhalla-core/sdk/io"
 	"github.com/akrck02/valhalla-core/sdk/models"
+	"github.com/akrck02/valhalla-core/sdk/models/schema"
 )
 
 func RegisterUser(db *sql.DB, user models.User) (*int64, *verrors.VError) {
@@ -19,7 +20,7 @@ func RegisterUser(db *sql.DB, user models.User) (*int64, *verrors.VError) {
 	}
 	defer tx.Commit()
 
-	userID, rerr := dal.RegisterUser(db, &user)
+	userID, rerr := dal.RegisterUser(db, (*schema.User)(&user))
 	if nil != rerr {
 		return nil, rerr
 	}
@@ -28,11 +29,21 @@ func RegisterUser(db *sql.DB, user models.User) (*int64, *verrors.VError) {
 }
 
 func GetUser(db *sql.DB, id int64) (*models.User, *verrors.VError) {
-	return dal.GetUser(db, id)
+	usr, err := dal.GetUser(db, id)
+	if nil != err {
+		return nil, err
+	}
+
+	return (*models.User)(usr), nil
 }
 
 func GetUserByEmail(db *sql.DB, email string) (*models.User, *verrors.VError) {
-	return dal.GetUserByEmail(db, email)
+	usr, err := dal.GetUserByEmail(db, email)
+	if nil != err {
+		return nil, err
+	}
+
+	return (*models.User)(usr), nil
 }
 
 func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension string) *verrors.VError {
@@ -73,7 +84,7 @@ func UpdateUserProfilePicture(db *sql.DB, userID int64, data *[]byte, extension 
 }
 
 func Login(db *sql.DB, serviceID string, registeredDomains []string, secret string, email string, password string, device *models.Device) (*string, *verrors.VError) {
-	return dal.Login(db, serviceID, registeredDomains, secret, email, password, device)
+	return dal.Login(db, serviceID, registeredDomains, secret, email, password, (*schema.Device)(device))
 }
 
 func LoginWithAuth(db *sql.DB, secret string, token string) (*models.AuthDevice, *verrors.VError) {

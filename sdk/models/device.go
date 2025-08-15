@@ -12,7 +12,7 @@ type Device struct {
 
 type AuthDevice struct {
 	UserId int64
-	Device
+	*Device
 }
 
 type DeviceToken struct {
